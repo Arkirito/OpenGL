@@ -70,7 +70,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(ProjectDir)\GLFW\include;$(ProjectDir)\GLAD\include;$(IncludePath)</IncludePath>
+    <IncludePath>D:\GitHub\OpenGL\OpenGL\OpenGL\GLM;$(ProjectDir)\GLFW\include;$(ProjectDir)\GLAD\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)\GLFW\lib-vc2015;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
