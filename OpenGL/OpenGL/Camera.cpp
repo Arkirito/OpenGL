@@ -1,5 +1,7 @@
 #include "Camera.h"
 
+#include <glfw3.h>
+
 Camera::Camera()
 {
 	mPosition = glm::vec3(0.f, 0.f, 0.f);
@@ -44,4 +46,23 @@ void Camera::UpdateViewMatrix()
 	mCameraUp = glm::cross(mCameraDirection, mCameraRight);
 
 	mViewMatrix = glm::lookAt(mPosition, mCameraTarget, mCameraUp);
+}
+
+void Camera::ProcessInput(GLFWwindow * window)
+{
+	float cameraSpeed = 0.05f; // adjust accordingly
+	glm::vec3 cachedPost = mPosition;
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+		mPosition += cameraSpeed * mCameraDirection;
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		mPosition -= cameraSpeed * mCameraDirection;
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		mPosition -= glm::normalize(glm::cross(mCameraDirection, mCameraUp)) * cameraSpeed;
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		mPosition += glm::normalize(glm::cross(mCameraDirection, mCameraUp)) * cameraSpeed;
+
+	if (mPosition != cachedPost)
+	{
+		UpdateViewMatrix();
+	}
 }

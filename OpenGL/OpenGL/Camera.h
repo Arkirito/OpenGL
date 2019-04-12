@@ -3,7 +3,11 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-class Camera
+// Custom
+
+#include "WorldObject.h"
+
+class Camera : public WorldObject
 {
 public:
 	Camera();
@@ -26,5 +30,10 @@ protected:
 
 	// Based on mPosition and mCameraTarget (and the up vector witch is currently hardcoded)
 	void UpdateViewMatrix();
+
+
+// WorldObject Implementation
+
+	virtual void ProcessInput(struct GLFWwindow *window) override;
 };
 

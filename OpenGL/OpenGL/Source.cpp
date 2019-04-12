@@ -12,6 +12,8 @@
 #include "Shader.h"
 #include "Texture.h"
 #include "Camera.h"
+#include "World.h"
+#include "GlobalInstance.h"
 
 /*float vertices[] = {
 
@@ -117,7 +119,7 @@ int main()
 
 	glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) {glViewport(0, 0, width, height); });
 
-	// High Level Structures
+	// High Level Stuff
 	Shader baseShader("Shaders/coordinates.vs", "Shaders/coordinates.fs");
 	Camera camera(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 2.0f));
 
@@ -155,7 +157,7 @@ int main()
 
 	while (!glfwWindowShouldClose(window))
 	{
-		processInput(window);
+		GlobalInstance::GetInstance()->HandleInput(window);
 
 		// rendering
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
