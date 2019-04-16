@@ -32,9 +32,14 @@ void Camera::SetTargetPosition(glm::vec3 targetPos)
 	UpdateViewMatrix();
 }
 
-glm::mat4 Camera::GetViewMatrix()
+glm::mat4 Camera::GetViewMatrix() const
 {
 	return mViewMatrix;
+}
+
+glm::vec3 Camera::GetPosition() const 
+{
+	return mPosition;
 }
 
 void Camera::UpdateViewMatrix()
