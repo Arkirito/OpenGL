@@ -70,7 +70,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>D:\GitHub\OpenGL\OpenGL\OpenGL\GLM;$(ProjectDir)\GLFW\include;$(ProjectDir)\GLAD\include;$(IncludePath)</IncludePath>
+    <IncludePath>D:\GitHub\OpenGL\OpenGL\OpenGL\Headers;D:\GitHub\OpenGL\OpenGL\OpenGL\GLM;$(ProjectDir)\GLFW\include;$(ProjectDir)\GLAD\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)\GLFW\lib-vc2015;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -129,25 +129,25 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="GLAD\src\glad.c" />
-    <ClCompile Include="GlobalInstance.cpp" />
-    <ClCompile Include="Material.cpp" />
-    <ClCompile Include="Shader.cpp" />
-    <ClCompile Include="Source.cpp" />
-    <ClCompile Include="Texture.cpp" />
-    <ClCompile Include="World.cpp" />
-    <ClCompile Include="WorldObject.cpp" />
+    <ClCompile Include="Sources\Camera.cpp" />
+    <ClCompile Include="Sources\GlobalInstance.cpp" />
+    <ClCompile Include="Sources\Material.cpp" />
+    <ClCompile Include="Sources\Shader.cpp" />
+    <ClCompile Include="Sources\Source.cpp" />
+    <ClCompile Include="Sources\Texture.cpp" />
+    <ClCompile Include="Sources\World.cpp" />
+    <ClCompile Include="Sources\WorldObject.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Camera.h" />
-    <ClInclude Include="GlobalInstance.h" />
-    <ClInclude Include="Material.h" />
-    <ClInclude Include="Shader.h" />
-    <ClInclude Include="stb_image.h" />
-    <ClInclude Include="Texture.h" />
-    <ClInclude Include="World.h" />
-    <ClInclude Include="WorldObject.h" />
+    <ClInclude Include="Headers\Camera.h" />
+    <ClInclude Include="Headers\GlobalInstance.h" />
+    <ClInclude Include="Headers\Material.h" />
+    <ClInclude Include="Headers\Shader.h" />
+    <ClInclude Include="Headers\stb_image.h" />
+    <ClInclude Include="Headers\Texture.h" />
+    <ClInclude Include="Headers\World.h" />
+    <ClInclude Include="Headers\WorldObject.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
