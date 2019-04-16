@@ -120,7 +120,7 @@ int main()
 	glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) {glViewport(0, 0, width, height); });
 
 	// High Level Stuff
-	Shader baseShader("Shaders/phong.vs", "Shaders/phong.fs");
+	Shader baseShader("Shaders/materials.vs", "Shaders/materials.fs");
 	Camera camera(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 2.0f));
 
 	unsigned int VBO;
@@ -190,9 +190,16 @@ int main()
 			baseShader.SetMat4("PVM", PVM);
 			baseShader.SetMat4("uModel", model);
 
-			baseShader.SetVec3("viewPos", camera.GetPosition());
-			baseShader.SetVec3("lightPos", glm::vec3(2.f, 2.f, 2.f));
-			baseShader.SetVec3("lightColor", glm::vec3(0.5f, 0.5f, 0.5f));
+			baseShader.SetVec3("light.ambient", glm::vec3(0.8f, 0.8f, 0.8f));
+			baseShader.SetVec3("light.diffuse", glm::vec3(0.5f, 0.5f, 0.5f)); // darken the light a bit to fit the scene
+			baseShader.SetVec3("light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+			baseShader.SetVec3("light.position", camera.GetPosition());
+
+			baseShader.SetVec3("material.ambient", glm::vec3(0.8f, 0.8f, 0.8f));
+			baseShader.SetVec3("material.diffuse", glm::vec3(0.8f, 0.8f, 0.8f));
+			baseShader.SetVec3("material.specular", glm::vec3(0.8f, 0.8f, 0.8f));
+			baseShader.SetFloat("material.shininess", 32.f);
+
 
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 		}
