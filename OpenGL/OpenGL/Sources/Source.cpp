@@ -120,7 +120,7 @@ int main()
 	glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) {glViewport(0, 0, width, height); });
 
 	// High Level Stuff
-	Shader baseShader("Shaders/materials.vs", "Shaders/materials.fs");
+	Shader baseShader("Shaders/LightningMaps.vs", "Shaders/LightningMaps.fs");
 	Camera camera(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 2.0f));
 
 	unsigned int VBO;
@@ -156,7 +156,8 @@ int main()
 
 	glBindVertexArray(0);
 
-	Texture tex("Content/Textures/wall.jpg");
+	Texture diffuse("Content/Textures/container_diffuse.jpg");
+	Texture specular("Content/Textures/container_specular.jpg");
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -168,7 +169,10 @@ int main()
 		glEnable(GL_DEPTH_TEST);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		tex.Bind();
+		glActiveTexture(GL_TEXTURE0);
+		diffuse.Bind();
+		glActiveTexture(GL_TEXTURE1);
+		specular.Bind();
 		baseShader.Use();
 
 		glBindVertexArray(VAO);
@@ -195,9 +199,8 @@ int main()
 			baseShader.SetVec3("light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
 			baseShader.SetVec3("light.position", camera.GetPosition());
 
-			baseShader.SetVec3("material.ambient", glm::vec3(0.8f, 0.8f, 0.8f));
-			baseShader.SetVec3("material.diffuse", glm::vec3(0.8f, 0.8f, 0.8f));
-			baseShader.SetVec3("material.specular", glm::vec3(0.8f, 0.8f, 0.8f));
+			baseShader.SetInt("material.diffuse", 0);
+			baseShader.SetInt("material.specular", 1);
 			baseShader.SetFloat("material.shininess", 32.f);
 
 
