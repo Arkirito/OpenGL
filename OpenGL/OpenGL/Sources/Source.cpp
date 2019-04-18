@@ -81,6 +81,20 @@ glm::vec3 cubePositions[] = {
 	glm::vec3(-1.3f,  1.0f, -1.5f)
 };
 
+glm::vec3 pointLightPositions[] = {
+	glm::vec3(0.7f,  0.2f,  2.0f),
+	glm::vec3(2.3f, -3.3f, -4.0f),
+	glm::vec3(-4.0f,  2.0f, -12.0f),
+	glm::vec3(0.0f,  0.0f, -3.0f)
+};
+
+glm::vec3 pointLightColors[] = {
+	glm::vec3(1.7f,  1.2f,  1.0f),
+	glm::vec3(2.3f,  3.3f, 4.0f),
+	glm::vec3(4.0f,  2.0f, 12.0f),
+	glm::vec3(1.0f,  1.0f, 3.0f)
+};
+
 unsigned int indices[] = {  // note that we start from 0!
 	0, 1, 3,   // first triangle
 	1, 2, 3    // second triangle
@@ -120,7 +134,7 @@ int main()
 	glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) {glViewport(0, 0, width, height); });
 
 	// High Level Stuff
-	Shader baseShader("Shaders/LightningMaps.vs", "Shaders/LightningMaps.fs");
+	Shader baseShader("Shaders/Lights.vs", "Shaders/Lights.fs");
 	Camera camera(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 2.0f));
 
 	unsigned int VBO;
@@ -194,14 +208,36 @@ int main()
 			baseShader.SetMat4("PVM", PVM);
 			baseShader.SetMat4("uModel", model);
 
-			baseShader.SetVec3("light.ambient", glm::vec3(0.8f, 0.8f, 0.8f));
-			baseShader.SetVec3("light.diffuse", glm::vec3(0.5f, 0.5f, 0.5f)); // darken the light a bit to fit the scene
-			baseShader.SetVec3("light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
-			baseShader.SetVec3("light.position", camera.GetPosition());
+			baseShader.SetVec3("dirLight.ambient", glm::vec3(0.8f, 0.8f, 0.8f));
+			baseShader.SetVec3("dirLight.diffuse", glm::vec3(0.5f, 0.5f, 0.5f)); // darken the light a bit to fit the scene
+			baseShader.SetVec3("dirLight.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+			baseShader.SetVec3("dirLight.direction", glm::vec3(-1.0f, -1.0f, -1.0f));
+
+			baseShader.SetVec3("spotLight.ambient", glm::vec3(0.8f, 0.8f, 0.8f));
+			baseShader.SetVec3("spotLight.diffuse", glm::vec3(0.5f, 0.5f, 0.5f)); // darken the light a bit to fit the scene
+			baseShader.SetVec3("spotLight.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+			baseShader.SetVec3("spotLight.direction", glm::vec3(-1.0f, -1.0f, -1.0f));
+			baseShader.SetVec3("spotLight.position", camera.GetPosition());
+			baseShader.SetFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
+			baseShader.SetFloat("spotLight.outerCutOff", glm::cos(glm::radians(22.5f)));
 
 			baseShader.SetInt("material.diffuse", 0);
 			baseShader.SetInt("material.specular", 1);
 			baseShader.SetFloat("material.shininess", 32.f);
+
+
+			for (GLuint i = 0; i < 4; i++)
+			{
+				std::string number = std::to_string(i);
+
+				baseShader.SetVec3(("pointLights[" + number + "].position").c_str(), glm::vec3(pointLightPositions[i].x, pointLightPositions[i].y, pointLightPositions[i].z));
+				baseShader.SetVec3(("pointLights[" + number + "].ambient").c_str(), glm::vec3(pointLightColors[i].r * 0.1f, pointLightColors[i].g * 0.1f, pointLightColors[i].b * 0.1f));
+				baseShader.SetVec3(("pointLights[" + number + "].diffuse").c_str(), glm::vec3(pointLightColors[i].r, pointLightColors[i].g, pointLightColors[i].b));
+				baseShader.SetVec3(("pointLights[" + number + "].specular").c_str(), glm::vec3(1.0f, 1.0f, 1.0f));
+				baseShader.SetFloat(("pointLights[" + number + "].constant").c_str(), 1.0f);
+				baseShader.SetFloat(("pointLights[" + number + "].linear").c_str(), 0.09f);
+				baseShader.SetFloat(("pointLights[" + number + "].quadratic").c_str(), 0.032f);
+			}
 
 
 			glDrawArrays(GL_TRIANGLES, 0, 36);
