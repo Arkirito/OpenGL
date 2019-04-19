@@ -45,6 +45,12 @@
     <ClCompile Include="Sources\WorldObject.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
+    <ClCompile Include="Sources\Mesh.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Model.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Headers\Camera.h">
@@ -69,6 +75,12 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="Headers\WorldObject.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\Mesh.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\Model.h">
       <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>

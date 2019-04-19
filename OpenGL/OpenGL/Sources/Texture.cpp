@@ -7,6 +7,43 @@
 #include <glfw3.h>
 
 #include <iostream>
+#include <vector>
+
+std::vector<Texture*> Texture::textures_loaded;
+
+Texture* Texture::LoadTexture(const std::string& filePath)
+{
+	Texture* outTexture;
+	bool found = false;
+	unsigned int j = 0;
+
+	for (; j < textures_loaded.size(); j++)
+	{
+		if ((std::strcmp(textures_loaded[j]->mPath.data(), filePath.c_str())) == 0)
+		{
+			outTexture = textures_loaded[j];
+			found = true;
+			break;
+		}
+	}
+
+	if (found)
+	{
+		return textures_loaded[j];
+	}
+
+	return new Texture(filePath);
+}
+
+void Texture::EmptyTexturePool()
+{
+	for (unsigned int j = 0; j < textures_loaded.size(); j++)
+	{
+		delete textures_loaded[j];
+	}
+
+	textures_loaded.empty();
+}
 
 Texture::Texture(const std::string& filePath)
 {
@@ -38,7 +75,22 @@ void Texture::Bind()
 	glBindTexture(GL_TEXTURE_2D, texID);
 }
 
-Texture::~Texture()
+unsigned int Texture::GetID() const
 {
-	
+	return texID;
+}
+
+std::string Texture::GetTextureType() const
+{
+	return mType;
+}
+
+void Texture::SetTextureType(std::string type)
+{
+	mType = type;
+}
+
+void Texture::SetTexturePath(std::string path)
+{
+	mPath = path;
 }

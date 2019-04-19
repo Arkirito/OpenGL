@@ -14,6 +14,7 @@
 #include "Camera.h"
 #include "World.h"
 #include "GlobalInstance.h"
+#include "Model.h"
 
 /*float vertices[] = {
 
@@ -170,8 +171,10 @@ int main()
 
 	glBindVertexArray(0);
 
-	Texture diffuse("Content/Textures/container_diffuse.jpg");
-	Texture specular("Content/Textures/container_specular.jpg");
+	Texture* diffuse = Texture::LoadTexture("Content/Textures/container_diffuse.jpg");
+	Texture* specular = Texture::LoadTexture("Content/Textures/container_specular.jpg");
+
+	Model model("Content\Models\nanosuit\nanosuit.obj");
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -184,9 +187,9 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glActiveTexture(GL_TEXTURE0);
-		diffuse.Bind();
+		diffuse->Bind();
 		glActiveTexture(GL_TEXTURE1);
-		specular.Bind();
+		specular->Bind();
 		baseShader.Use();
 
 		glBindVertexArray(VAO);
@@ -246,6 +249,8 @@ int main()
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
+
+	Texture::EmptyTexturePool();
 
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
