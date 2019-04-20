@@ -135,7 +135,9 @@ int main()
 	glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) {glViewport(0, 0, width, height); });
 
 	// High Level Stuff
-	Shader baseShader("Shaders/Depth.vs", "Shaders/Depth.fs");
+	Shader baseShader("Shaders/Mesh.vs", "Shaders/Mesh.fs");
+	Shader coloredShader("Shaders/SingleColorMesh.vs", "Shaders/SingleColorMesh.fs");
+
 	Camera camera(glm::vec3(0.0f, 8.0f, 25.0f), glm::vec3(0.0f, 8.0f, 0.0f));
 
 	Model model("Content/Models/nanosuit/nanosuit.obj");
@@ -148,8 +150,11 @@ int main()
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
 		glEnable(GL_DEPTH_TEST);
+		glEnable(GL_STENCIL_TEST);
 		glDepthFunc(GL_LESS);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 		baseShader.Use();
 
@@ -195,7 +200,26 @@ int main()
 			baseShader.SetFloat(("pointLights[" + number + "].quadratic").c_str(), 0.032f);
 		}
 
+		glStencilFunc(GL_ALWAYS, 1, 0xFF);
+		glStencilMask(0xFF);
 		model.Draw(baseShader);
+
+		glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+		glStencilMask(0x00);
+		glDisable(GL_DEPTH_TEST);
+		coloredShader.Use();
+
+		coloredShader.SetVec3("mColor", glm::vec3(1.0f, 0.f, 0.f));
+
+		glm::mat4  modelScaledMat = glm::scale(modelMatrix, glm::vec3(1.01f, 1.01f, 1.01f));
+		PVM = projection * camera.GetViewMatrix() * modelScaledMat;
+		baseShader.SetMat4("PVM", PVM);
+
+		model.Draw(coloredShader);
+		glStencilMask(0xFF);
+		glEnable(GL_DEPTH_TEST);
+
+
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
