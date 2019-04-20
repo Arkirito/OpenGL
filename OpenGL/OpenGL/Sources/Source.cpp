@@ -151,10 +151,15 @@ int main()
 
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_STENCIL_TEST);
+		glEnable(GL_CULL_FACE);
+
 		glDepthFunc(GL_LESS);
 
 		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+		glCullFace(GL_FRONT);
+		glFrontFace(GL_CW);
 
 		baseShader.Use();
 
