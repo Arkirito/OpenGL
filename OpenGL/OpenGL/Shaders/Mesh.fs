@@ -1,6 +1,5 @@
 #version 330 core
 out vec4 FragColor;
-in vec4 vertexColor; 
 
 in vec2 TexCoords;
 
@@ -13,11 +12,11 @@ uniform vec3 viewPos;
 struct Material {
     float shininess;
 
-	uniform sampler2D texture_diffuse1;
-    uniform sampler2D texture_diffuse2;
-    uniform sampler2D texture_diffuse3;
-    uniform sampler2D texture_specular1;
-    uniform sampler2D texture_specular2;
+	sampler2D texture_diffuse1;
+    sampler2D texture_diffuse2;
+    sampler2D texture_diffuse3;
+    sampler2D texture_specular1;
+    sampler2D texture_specular2;
 }; 
   
 uniform Material material;
@@ -132,9 +131,9 @@ void main()
     vec3 result = CalcDirLight(dirLight, norm, viewDir);
     // phase 2: Point lights
     for(int i = 0; i < NR_POINT_LIGHTS; i++)
-        result += CalcPointLight(pointLights[i], norm, FragPos, viewDir);    
+       result += CalcPointLight(pointLights[i], norm, FragPos, viewDir);    
     // phase 3: Spot light
     result += CalcSpotLight(spotLight, norm, FragPos, viewDir);    
     
-    FragColor = vec4(result, 1.0) * texture(ourTexture, TexCoords);
+    FragColor = texture(material.texture_diffuse1, TexCoords);
 }

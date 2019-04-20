@@ -59,7 +59,7 @@ Texture::Texture(const std::string& filePath)
 	unsigned char *mData = stbi_load(filePath.c_str(), &width, &height, &nrChannels, 0);
 	if (mData)
 	{
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, mData);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, mData);
 		glGenerateMipmap(GL_TEXTURE_2D);
 	}
 	else
