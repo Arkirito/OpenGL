@@ -135,7 +135,7 @@ int main()
 	glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) {glViewport(0, 0, width, height); });
 
 	// High Level Stuff
-	Shader baseShader("Shaders/Mesh.vs", "Shaders/Mesh.fs");
+	Shader baseShader("Shaders/Depth.vs", "Shaders/Depth.fs");
 	Camera camera(glm::vec3(0.0f, 8.0f, 25.0f), glm::vec3(0.0f, 8.0f, 0.0f));
 
 	Model model("Content/Models/nanosuit/nanosuit.obj");
@@ -148,6 +148,7 @@ int main()
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
 		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LESS);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		baseShader.Use();
