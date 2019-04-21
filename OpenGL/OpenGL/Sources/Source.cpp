@@ -197,6 +197,8 @@ int main()
 	Shader baseShader("Shaders/Mesh.vs", "Shaders/Mesh.fs");
 	Shader coloredShader("Shaders/SingleColorMesh.vs", "Shaders/SingleColorMesh.fs");
 	Shader skyboxShader("Shaders/skybox.vs", "Shaders/skybox.fs");
+	Shader reflectionShader("Shaders/reflection.vs", "Shaders/reflection.fs");
+	Shader refractionShader("Shaders/reflection.vs", "Shaders/refraction.fs");
 
 	Camera camera(glm::vec3(0.0f, 8.0f, 25.0f), glm::vec3(0.0f, 8.0f, 0.0f));
 
@@ -240,7 +242,7 @@ int main()
 		glm::mat4 modelMatrix = glm::mat4(1.0f);
 		float angle = 20.0f;
 		//modelMatrix = glm::rotate(modelMatrix, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-		modelMatrix = glm::rotate(modelMatrix, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		//modelMatrix = glm::rotate(modelMatrix, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
 		glm::mat4 projection;
 		projection = glm::perspective(glm::radians(45.0f), ViewportWidh / ViewportHeight, 0.1f, 100.0f);
@@ -277,9 +279,29 @@ int main()
 			baseShader.SetFloat(("pointLights[" + number + "].quadratic").c_str(), 0.032f);
 		}
 
+		reflectionShader.Use();
+		reflectionShader.SetMat4("model", modelMatrix);
+		reflectionShader.SetMat4("view", camera.GetViewMatrix());
+		reflectionShader.SetMat4("projection", projection);
+		reflectionShader.SetFloat("cameraPos", glm::cos(glm::radians(22.5f)));
+		reflectionShader.SetFloat("skybox", cubemap.GetID());
+
 		glStencilFunc(GL_ALWAYS, 1, 0xFF);
 		glStencilMask(0xFF);
-		model.Draw(baseShader);
+		model.Draw(reflectionShader);
+
+		modelMatrix = glm::translate(modelMatrix, glm::vec3(20.0f, 0.0f, 0.0f));
+
+		refractionShader.Use();
+		refractionShader.SetMat4("model", modelMatrix);
+		refractionShader.SetMat4("view", camera.GetViewMatrix());
+		refractionShader.SetMat4("projection", projection);
+		refractionShader.SetFloat("cameraPos", glm::cos(glm::radians(22.5f)));
+		refractionShader.SetFloat("skybox", cubemap.GetID());
+
+		glStencilFunc(GL_ALWAYS, 1, 0xFF);
+		glStencilMask(0xFF);
+		model.Draw(refractionShader);
 
 		glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
 		glStencilMask(0x00);
@@ -288,7 +310,7 @@ int main()
 
 		coloredShader.SetVec3("mColor", glm::vec3(1.0f, 0.f, 0.f));
 
-		glm::mat4  modelScaledMat = glm::scale(modelMatrix, glm::vec3(1.01f, 1.01f, 1.01f));
+		glm::mat4  modelScaledMat = glm::scale(modelMatrix, glm::vec3(1.2f, 1.2f, 1.2f));
 		PVM = projection * camera.GetViewMatrix() * modelScaledMat;
 		baseShader.SetMat4("PVM", PVM);
 
