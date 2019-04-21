@@ -19,8 +19,6 @@ public:
 
 private:
 
-	unsigned char *mData;
-
 	unsigned int texID;
 
 	std::string mType;

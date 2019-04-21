@@ -133,6 +133,7 @@
   <ItemGroup>
     <ClCompile Include="GLAD\src\glad.c" />
     <ClCompile Include="Sources\Camera.cpp" />
+    <ClCompile Include="Sources\Cubemap.cpp" />
     <ClCompile Include="Sources\GlobalInstance.cpp" />
     <ClCompile Include="Sources\Material.cpp" />
     <ClCompile Include="Sources\Mesh.cpp" />
@@ -145,6 +146,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Headers\Camera.h" />
+    <ClInclude Include="Headers\Cubemap.h" />
     <ClInclude Include="Headers\GlobalInstance.h" />
     <ClInclude Include="Headers\Material.h" />
     <ClInclude Include="Headers\Mesh.h" />

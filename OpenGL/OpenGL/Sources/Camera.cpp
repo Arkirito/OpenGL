@@ -55,16 +55,44 @@ void Camera::UpdateViewMatrix()
 
 void Camera::ProcessInput(GLFWwindow * window)
 {
-	float cameraSpeed = 0.05f; // adjust accordingly
+	float cameraSpeed = 0.2f; // adjust accordingly
+	float speedBoost = 1.f;
+
+	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+	{
+		speedBoost = 4.f;
+	}
+
 	glm::vec3 cachedPost = mPosition;
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		mPosition += cameraSpeed * mCameraDirection;
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		mPosition -= cameraSpeed * mCameraDirection;
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-		mPosition -= glm::normalize(glm::cross(mCameraDirection, mCameraUp)) * cameraSpeed;
+	{
+		mPosition += cameraSpeed * speedBoost * mCameraDirection;
+		mCameraTarget += cameraSpeed * speedBoost * mCameraDirection;
+	}
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+	{
+		mPosition -= cameraSpeed * speedBoost * mCameraDirection;
+		mCameraTarget -= cameraSpeed * speedBoost * mCameraDirection;
+	}
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-		mPosition += glm::normalize(glm::cross(mCameraDirection, mCameraUp)) * cameraSpeed;
+	{
+		mPosition += cameraSpeed * speedBoost * mCameraRight;
+		mCameraTarget += cameraSpeed * speedBoost * mCameraRight;
+	}
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+	{
+		mPosition -= cameraSpeed * speedBoost * mCameraRight;
+		mCameraTarget -= cameraSpeed * speedBoost * mCameraRight;
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+		mPosition -= glm::normalize(glm::cross(mCameraDirection, mCameraUp)) * cameraSpeed* speedBoost;
+	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+		mPosition += glm::normalize(glm::cross(mCameraDirection, mCameraUp)) * cameraSpeed* speedBoost;
+	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+		mPosition -= glm::normalize(glm::cross(mCameraDirection, mCameraRight)) * cameraSpeed* speedBoost;
+	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+		mPosition += glm::normalize(glm::cross(mCameraDirection, mCameraRight)) * cameraSpeed* speedBoost;
 
 	if (mPosition != cachedPost)
 	{

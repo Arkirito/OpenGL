@@ -51,6 +51,9 @@
     <ClCompile Include="Sources\Model.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
+    <ClCompile Include="Sources\Cubemap.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Headers\Camera.h">
@@ -81,6 +84,9 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="Headers\Model.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\Cubemap.h">
       <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>
