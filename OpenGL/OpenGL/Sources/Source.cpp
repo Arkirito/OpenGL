@@ -239,6 +239,7 @@ int main()
 
 		// Coordinates
 
+
 		glm::mat4 modelMatrix = glm::mat4(1.0f);
 		float angle = 20.0f;
 		//modelMatrix = glm::rotate(modelMatrix, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
@@ -279,44 +280,23 @@ int main()
 			baseShader.SetFloat(("pointLights[" + number + "].quadratic").c_str(), 0.032f);
 		}
 
-		reflectionShader.Use();
-		reflectionShader.SetMat4("model", modelMatrix);
-		reflectionShader.SetMat4("view", camera.GetViewMatrix());
-		reflectionShader.SetMat4("projection", projection);
-		reflectionShader.SetFloat("cameraPos", glm::cos(glm::radians(22.5f)));
-		reflectionShader.SetFloat("skybox", cubemap.GetID());
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-		glStencilFunc(GL_ALWAYS, 1, 0xFF);
-		glStencilMask(0xFF);
-		model.Draw(reflectionShader);
+		// Distance sort is skipped cause i'm lasy
 
-		modelMatrix = glm::translate(modelMatrix, glm::vec3(20.0f, 0.0f, 0.0f));
-
-		refractionShader.Use();
-		refractionShader.SetMat4("model", modelMatrix);
-		refractionShader.SetMat4("view", camera.GetViewMatrix());
-		refractionShader.SetMat4("projection", projection);
-		refractionShader.SetFloat("cameraPos", glm::cos(glm::radians(22.5f)));
-		refractionShader.SetFloat("skybox", cubemap.GetID());
-
-		glStencilFunc(GL_ALWAYS, 1, 0xFF);
-		glStencilMask(0xFF);
-		model.Draw(refractionShader);
-
-		glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-		glStencilMask(0x00);
-		glDisable(GL_DEPTH_TEST);
 		coloredShader.Use();
-
-		coloredShader.SetVec3("mColor", glm::vec3(1.0f, 0.f, 0.f));
-
-		glm::mat4  modelScaledMat = glm::scale(modelMatrix, glm::vec3(1.2f, 1.2f, 1.2f));
-		PVM = projection * camera.GetViewMatrix() * modelScaledMat;
-		baseShader.SetMat4("PVM", PVM);
+		coloredShader.SetMat4("PVM", PVM);
+		coloredShader.SetVec4("mColor", glm::vec4(1.0f, 0.f, 0.f, 0.5f));
 
 		model.Draw(coloredShader);
-		glStencilMask(0xFF);
-		glEnable(GL_DEPTH_TEST);
+
+		modelMatrix = glm::translate(modelMatrix, glm::vec3(0.f, 0.f, 5.f));
+		PVM = projection * camera.GetViewMatrix() * modelMatrix;
+		coloredShader.SetMat4("PVM", PVM);
+		coloredShader.SetVec4("mColor", glm::vec4(0.0f, 1.f, 0.f, 0.5f));
+
+		model.Draw(coloredShader);
 
 		// draw skybox as last
 		glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
