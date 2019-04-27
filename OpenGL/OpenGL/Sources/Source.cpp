@@ -204,12 +204,14 @@ int main()
 
 	glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) {glViewport(0, 0, width, height); });
 
-	// High Level Stuff
+	// Shaders
 	Shader baseShader("Shaders/Mesh.vs", "Shaders/Mesh.fs");
 	Shader coloredShader("Shaders/SingleColorMesh.vs", "Shaders/SingleColorMesh.fs");
 	Shader skyboxShader("Shaders/skybox.vs", "Shaders/skybox.fs");
 	Shader reflectionShader("Shaders/reflection.vs", "Shaders/reflection.fs");
 	Shader refractionShader("Shaders/reflection.vs", "Shaders/refraction.fs");
+
+	// Post-Process
 	Shader screenShader("Shaders/screenShader.vs", "Shaders/screenShader.fs");
 	Shader negativeShader("Shaders/screenShader.vs", "Shaders/negative.fs");
 	Shader grayscaleShader("Shaders/screenShader.vs", "Shaders/grayscale.fs");
@@ -338,18 +340,9 @@ int main()
 
 		// Distance sort is skipped cause i'm lasy
 
-		coloredShader.Use();
-		coloredShader.SetMat4("PVM", PVM);
-		coloredShader.SetVec4("mColor", glm::vec4(1.0f, 0.f, 0.f, 0.5f));
+		baseShader.Use();
 
-		model.Draw(coloredShader);
-
-		modelMatrix = glm::translate(modelMatrix, glm::vec3(0.f, 0.f, 5.f));
-		PVM = projection * camera.GetViewMatrix() * modelMatrix;
-		coloredShader.SetMat4("PVM", PVM);
-		coloredShader.SetVec4("mColor", glm::vec4(0.0f, 1.f, 0.f, 0.5f));
-
-		model.Draw(coloredShader);
+		model.Draw(baseShader);
 
 		// draw skybox as last
 		glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
@@ -372,7 +365,7 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		// Post process shader:
-		blurShader.Use();
+		screenShader.Use();
 		glBindVertexArray(quadVAO);
 		glBindTexture(GL_TEXTURE_2D, textureColorbuffer);	// use the color attachment texture as the texture of the quad plane
 		glDrawArrays(GL_TRIANGLES, 0, 6);
