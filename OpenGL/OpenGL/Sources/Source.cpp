@@ -194,6 +194,11 @@ int main()
 	Texture* woodenFloor_Normal = Texture::LoadTexture("Content/Textures/woodenFloorPBR/hardwood-brown-planks-normal-dx.png");
 	Texture* woodenFloor_Metallic = Texture::LoadTexture("Content/Textures/woodenFloorPBR/hardwood-brown-planks-metallic.png");
 
+	//parallax
+	Texture* brickWall_Diffuse = Texture::LoadTexture("Content/Textures/parallaxBricks/diffuse.jpg");
+	Texture* brickWall_Normal = Texture::LoadTexture("Content/Textures/parallaxBricks/normals.jpg");
+	Texture* brickWall_Height = Texture::LoadTexture("Content/Textures/parallaxBricks/height.jpg");
+
 	// framebuffer configuration
 	// -------------------------
 	unsigned int framebuffer;
@@ -301,10 +306,9 @@ int main()
 			}
 		}
 
-		PrimitiveManager::DrawQuad(baseShader, camera, glm::vec3(0, 0, 0), glm::vec3(-90, 0, 0), glm::vec3(50, 50, 1), woodenFloor_Diffuse, woodenFloor_Height, woodenFloor_Normal);
+		PrimitiveManager::DrawQuad(baseShader, camera, glm::vec3(0, 0, 0), glm::vec3(-90, 0, 0), glm::vec3(15, 15, 1), brickWall_Diffuse, brickWall_Height, brickWall_Normal, brickWall_Height);
 		//PrimitiveManager::DrawCube(baseShader, camera, glm::vec3(glm::sin(glfwGetTime()/2) * 10, 2, glm::cos(glfwGetTime()/2) * 10), glm::vec3(0, 0, 0), glm::vec3(2, 2, 2), cubeDiffuse, cubeSpecular);
 		//PrimitiveManager::DrawCube(baseShader, camera, glm::vec3(glm::sin(glfwGetTime()) * 10 + 4, 10, glm::cos(glfwGetTime()) * 10 + 8), glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), cubeDiffuse, cubeSpecular);
-		
 		
 		//model.Draw(baseShader);
 

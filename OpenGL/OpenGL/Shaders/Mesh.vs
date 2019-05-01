@@ -14,19 +14,24 @@ out mat3 TBN;
 uniform mat4 PVM;
 uniform mat4 uModel;
 
+out vec3 TangentViewPos;
+out vec3 TangentFragPos;
+
+uniform vec3 viewPos;
+
 void main()
 {
     FragPos = vec3(uModel * vec4(aPos, 1.0));
     Normal = mat3(transpose(inverse(uModel))) * aNormal;  
     TexCoords = aTexCoords;
 
-	mat3 normalMatrix = transpose(inverse(mat3(uModel)));
-    vec3 T = normalize(normalMatrix * aTangent);
-    vec3 N = normalize(normalMatrix * aNormal);
-    T = normalize(T - dot(T, N) * N);
-    vec3 B = cross(N, T);
+    vec3 T = normalize(mat3(uModel) * aTangent);
+    vec3 B = normalize(mat3(uModel) * aBitangent);
+    vec3 N = normalize(mat3(uModel) * aNormal);
+    TBN = transpose(mat3(T, B, N));
     
-    TBN = mat3(T, B, N);    
+	TangentViewPos  = TBN * viewPos;
+    TangentFragPos  = TBN * FragPos;
 
 	gl_Position = PVM * vec4(aPos, 1.0);
 }
