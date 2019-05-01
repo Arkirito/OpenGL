@@ -42,6 +42,7 @@ void PrimitiveManager::DrawCube(Shader & shader, Camera & camera, glm::vec3 posi
 
 		shader.SetMat4("PVM", PVM);
 		shader.SetMat4("uModel", modelMatrix);
+		shader.SetMat4("viewPos", camera.GetViewMatrix());
 	}
 
 	{
@@ -53,6 +54,7 @@ void PrimitiveManager::DrawCube(Shader & shader, Camera & camera, glm::vec3 posi
 		glActiveTexture(GL_TEXTURE1);
 		specular->Bind();
 		shader.SetInt("material.texture_specular1", 1);
+		shader.SetFloat("material.shininess", 16.0);
 		//
 		glActiveTexture(GL_TEXTURE0);
 	}
@@ -89,6 +91,7 @@ void PrimitiveManager::DrawQuad(Shader & shader, Camera & camera, glm::vec3 posi
 
 		shader.SetMat4("PVM", PVM);
 		shader.SetMat4("uModel", modelMatrix);
+		shader.SetMat4("viewPos", camera.GetViewMatrix());
 	}
 
 	{
@@ -100,6 +103,7 @@ void PrimitiveManager::DrawQuad(Shader & shader, Camera & camera, glm::vec3 posi
 		glActiveTexture(GL_TEXTURE1);
 		specular->Bind();
 		shader.SetInt("material.texture_specular1", 1);
+		shader.SetFloat("material.shininess", 16.0);
 		//
 		glActiveTexture(GL_TEXTURE0);
 	}

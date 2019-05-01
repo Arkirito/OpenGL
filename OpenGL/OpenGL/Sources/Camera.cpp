@@ -42,6 +42,11 @@ glm::vec3 Camera::GetPosition() const
 	return mPosition;
 }
 
+glm::vec3 Camera::GetDirection() const
+{
+	return mCameraDirection;
+}
+
 void Camera::UpdateViewMatrix()
 {
 	mCameraDirection = glm::normalize(mPosition - mCameraTarget);

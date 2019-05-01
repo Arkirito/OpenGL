@@ -255,17 +255,6 @@ int main()
 
 		// Coordinates
 
-		glm::mat4 modelMatrix = glm::mat4(1.0f);
-		float angle = 20.0f;
-
-		glm::mat4 projection;
-		projection = glm::perspective(glm::radians(45.0f), ViewportWidh / ViewportHeight, 0.1f, 100.0f);
-
-		glm::mat4 PVM = projection * camera.GetViewMatrix() * modelMatrix;
-
-		baseShader.SetMat4("PVM", PVM);
-		baseShader.SetMat4("uModel", modelMatrix);
-
 		baseShader.SetVec3("dirLight.ambient", glm::vec3(0.2f, 0.2f, 0.2f));
 		baseShader.SetVec3("dirLight.diffuse", glm::vec3(0.5f, 0.5f, 0.5f)); // darken the light a bit to fit the scene
 		baseShader.SetVec3("dirLight.specular", glm::vec3(1.0f, 1.0f, 1.0f));
@@ -311,11 +300,11 @@ int main()
 				PrimitiveManager::DrawCube(coloredShader, camera, glm::vec3(pointLightPositions[i].x, pointLightPositions[i].y, pointLightPositions[i].z), glm::vec3(0, 0, 0), glm::vec3(0.1, 0.1, 0.1), cubeDiffuse, cubeSpecular);
 			}
 		}
+
 		PrimitiveManager::DrawQuad(baseShader, camera, glm::vec3(0, 0, 0), glm::vec3(-90, 0, 0), glm::vec3(50, 50, 1), woodenFloor_Diffuse, woodenFloor_Height);
-		//PrimitiveManager::DrawCube(baseShader, camera, glm::vec3(-4, 3, 8), glm::vec3(0, 0, 0), glm::vec3(0, 0, 0), cubeDiffuse, cubeSpecular);
-		//PrimitiveManager::DrawCube(baseShader, camera, glm::vec3(5, 5, 5), glm::vec3(0, 0, 0), glm::vec3(0, 0, 0), cubeDiffuse, cubeSpecular);
+		PrimitiveManager::DrawCube(baseShader, camera, glm::vec3(glm::sin(glfwGetTime()) * 10, 0, glm::cos(glfwGetTime()) * 10), glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), cubeDiffuse, cubeSpecular);
+		PrimitiveManager::DrawCube(baseShader, camera, glm::vec3(glm::sin(glfwGetTime()) * 10 + 4, 10, glm::cos(glfwGetTime()) * 10 + 8), glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), cubeDiffuse, cubeSpecular);
 		PrimitiveManager::DrawSkybox(skyboxShader, camera, cubemap);
-		model.Draw(baseShader);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
