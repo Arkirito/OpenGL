@@ -54,6 +54,12 @@
     <ClCompile Include="Sources\Cubemap.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
+    <ClCompile Include="Sources\PrimitiveManager.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Settings.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Headers\Camera.h">
@@ -87,6 +93,12 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="Headers\Cubemap.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\PrimitiveManager.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\Settings.h">
       <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>

@@ -3,17 +3,20 @@
 #include "GlobalInstance.h"
 
 #include "World.h"
+#include "Settings.h"
 
 GlobalInstance* GlobalInstance::mInstance;
 
 GlobalInstance::GlobalInstance()
 {
 	mWorld = new World();
+	mSettings = new Settings();
 }
 
 GlobalInstance::~GlobalInstance()
 {
 	delete mWorld;
+	delete mSettings;
 }
 
 GlobalInstance * GlobalInstance::GetInstance()
@@ -34,4 +37,9 @@ World* GlobalInstance::GetWorld()
 void GlobalInstance::HandleInput(GLFWwindow * window)
 {
 	mWorld->HandleInput(window);
+}
+
+const Settings * GlobalInstance::GetSettings() const
+{
+	return mSettings;
 }

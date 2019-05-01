@@ -16,6 +16,7 @@
 #include "GlobalInstance.h"
 #include "Model.h"
 #include "Cubemap.h"
+#include "PrimitiveManager.h"
 
 #define ViewportWidh 1600.f
 #define ViewportHeight 720.f
@@ -86,56 +87,11 @@
 	glm::vec3(-1.3f,  1.0f, -1.5f)
 };*/
 
-float skyboxVertices[] = {
-	// positions          
-	-1.0f,  1.0f, -1.0f,
-	-1.0f, -1.0f, -1.0f,
-	1.0f, -1.0f, -1.0f,
-	1.0f, -1.0f, -1.0f,
-	1.0f,  1.0f, -1.0f,
-	-1.0f,  1.0f, -1.0f,
-
-	-1.0f, -1.0f,  1.0f,
-	-1.0f, -1.0f, -1.0f,
-	-1.0f,  1.0f, -1.0f,
-	-1.0f,  1.0f, -1.0f,
-	-1.0f,  1.0f,  1.0f,
-	-1.0f, -1.0f,  1.0f,
-
-	1.0f, -1.0f, -1.0f,
-	1.0f, -1.0f,  1.0f,
-	1.0f,  1.0f,  1.0f,
-	1.0f,  1.0f,  1.0f,
-	1.0f,  1.0f, -1.0f,
-	1.0f, -1.0f, -1.0f,
-
-	-1.0f, -1.0f,  1.0f,
-	-1.0f,  1.0f,  1.0f,
-	1.0f,  1.0f,  1.0f,
-	1.0f,  1.0f,  1.0f,
-	1.0f, -1.0f,  1.0f,
-	-1.0f, -1.0f,  1.0f,
-
-	-1.0f,  1.0f, -1.0f,
-	1.0f,  1.0f, -1.0f,
-	1.0f,  1.0f,  1.0f,
-	1.0f,  1.0f,  1.0f,
-	-1.0f,  1.0f,  1.0f,
-	-1.0f,  1.0f, -1.0f,
-
-	-1.0f, -1.0f, -1.0f,
-	-1.0f, -1.0f,  1.0f,
-	1.0f, -1.0f, -1.0f,
-	1.0f, -1.0f, -1.0f,
-	-1.0f, -1.0f,  1.0f,
-	1.0f, -1.0f,  1.0f
-};
-
 glm::vec3 pointLightPositions[] = {
-	glm::vec3(0.7f,  0.2f,  2.0f),
-	glm::vec3(2.3f, -3.3f, -4.0f),
+	glm::vec3(10.f,  0.2f,  2.0f),
+	glm::vec3(2.3f, 3.3f, -4.0f),
 	glm::vec3(-4.0f,  2.0f, -12.0f),
-	glm::vec3(0.0f,  0.0f, -3.0f)
+	glm::vec3(-5.0f,  0.0f, -3.0f)
 };
 
 glm::vec3 pointLightColors[] = {
@@ -224,15 +180,19 @@ int main()
 
 	Cubemap cubemap(faces);
 
-	// skybox VAO
-	unsigned int skyboxVAO, skyboxVBO;
-	glGenVertexArrays(1, &skyboxVAO);
-	glGenBuffers(1, &skyboxVBO);
-	glBindVertexArray(skyboxVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	Texture* cubeDiffuse = Texture::LoadTexture("Content/Textures/container_diffuse.jpg");
+	Texture* cubeSpecular = Texture::LoadTexture("Content/Textures/container_specular.jpg");
+
+	Texture* metalDiffuse = Texture::LoadTexture("Content/Textures/metalPBR/rustediron2_basecolor.png");
+	Texture* metalMetallic = Texture::LoadTexture("Content/Textures/metalPBR/rustediron2_metallic.png");
+	Texture* metalNormal = Texture::LoadTexture("Content/Textures/metalPBR/rustediron2_normal.png");
+	Texture* metalRoughness = Texture::LoadTexture("Content/Textures/metalPBR/rustediron2_roughness.png");
+
+	//wood
+	Texture* woodenFloor_Diffuse = Texture::LoadTexture("Content/Textures/woodenFloorPBR/hardwood-brown-planks-albedo.png");
+	Texture* woodenFloor_Height = Texture::LoadTexture("Content/Textures/woodenFloorPBR/hardwood-brown-planks-height.png");
+	Texture* woodenFloor_Normal = Texture::LoadTexture("Content/Textures/woodenFloorPBR/hardwood-brown-planks-normal-dx.png");
+	Texture* woodenFloor_Metallic = Texture::LoadTexture("Content/Textures/woodenFloorPBR/hardwood-brown-planks-metallic.png");
 
 	// framebuffer configuration
 	// -------------------------
@@ -297,8 +257,6 @@ int main()
 
 		glm::mat4 modelMatrix = glm::mat4(1.0f);
 		float angle = 20.0f;
-		//modelMatrix = glm::rotate(modelMatrix, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-		//modelMatrix = glm::rotate(modelMatrix, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
 		glm::mat4 projection;
 		projection = glm::perspective(glm::radians(45.0f), ViewportWidh / ViewportHeight, 0.1f, 100.0f);
@@ -308,19 +266,18 @@ int main()
 		baseShader.SetMat4("PVM", PVM);
 		baseShader.SetMat4("uModel", modelMatrix);
 
-		baseShader.SetVec3("dirLight.ambient", glm::vec3(0.8f, 0.8f, 0.8f));
+		baseShader.SetVec3("dirLight.ambient", glm::vec3(0.2f, 0.2f, 0.2f));
 		baseShader.SetVec3("dirLight.diffuse", glm::vec3(0.5f, 0.5f, 0.5f)); // darken the light a bit to fit the scene
 		baseShader.SetVec3("dirLight.specular", glm::vec3(1.0f, 1.0f, 1.0f));
 		baseShader.SetVec3("dirLight.direction", glm::vec3(-1.0f, -1.0f, -1.0f));
 
-		baseShader.SetVec3("spotLight.ambient", glm::vec3(0.8f, 0.8f, 0.8f));
+		baseShader.SetVec3("spotLight.ambient", glm::vec3(0.2f, 0.2f, 0.2f));
 		baseShader.SetVec3("spotLight.diffuse", glm::vec3(0.5f, 0.5f, 0.5f)); // darken the light a bit to fit the scene
 		baseShader.SetVec3("spotLight.specular", glm::vec3(1.0f, 1.0f, 1.0f));
 		baseShader.SetVec3("spotLight.direction", glm::vec3(-1.0f, -1.0f, -1.0f));
 		baseShader.SetVec3("spotLight.position", camera.GetPosition());
 		baseShader.SetFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
 		baseShader.SetFloat("spotLight.outerCutOff", glm::cos(glm::radians(22.5f)));
-
 
 		for (GLuint i = 0; i < 4; i++)
 		{
@@ -333,30 +290,32 @@ int main()
 			baseShader.SetFloat(("pointLights[" + number + "].constant").c_str(), 1.0f);
 			baseShader.SetFloat(("pointLights[" + number + "].linear").c_str(), 0.09f);
 			baseShader.SetFloat(("pointLights[" + number + "].quadratic").c_str(), 0.032f);
+
+			
 		}
 
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-		// Distance sort is skipped cause i'm lasy
+		//Lights
+		{
+			// spot lights
+			coloredShader.Use();
+			coloredShader.SetVec4("mColor", glm::vec4(0.5f, 0.5f, 0.5f, 1.f));
+			PrimitiveManager::DrawCube(coloredShader, camera, camera.GetPosition(), glm::vec3(0, 0, 0), glm::vec3(0.1, 0.1, 0.1), cubeDiffuse, cubeSpecular);
 
-		baseShader.Use();
-
+			// spoint lights
+			for (GLuint i = 0; i < 4; i++)
+			{
+				coloredShader.SetVec4("mColor", glm::vec4(pointLightColors[i].r, pointLightColors[i].g, pointLightColors[i].b, 1.f));
+				PrimitiveManager::DrawCube(coloredShader, camera, glm::vec3(pointLightPositions[i].x, pointLightPositions[i].y, pointLightPositions[i].z), glm::vec3(0, 0, 0), glm::vec3(0.1, 0.1, 0.1), cubeDiffuse, cubeSpecular);
+			}
+		}
+		PrimitiveManager::DrawQuad(baseShader, camera, glm::vec3(0, 0, 0), glm::vec3(-90, 0, 0), glm::vec3(50, 50, 1), woodenFloor_Diffuse, woodenFloor_Height);
+		//PrimitiveManager::DrawCube(baseShader, camera, glm::vec3(-4, 3, 8), glm::vec3(0, 0, 0), glm::vec3(0, 0, 0), cubeDiffuse, cubeSpecular);
+		//PrimitiveManager::DrawCube(baseShader, camera, glm::vec3(5, 5, 5), glm::vec3(0, 0, 0), glm::vec3(0, 0, 0), cubeDiffuse, cubeSpecular);
+		PrimitiveManager::DrawSkybox(skyboxShader, camera, cubemap);
 		model.Draw(baseShader);
-
-		// draw skybox as last
-		glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
-		skyboxShader.Use();
-		glm::mat4 view = glm::mat4(glm::mat3(camera.GetViewMatrix())); // remove translation from the view matrix
-		skyboxShader.SetMat4("view", view);
-		skyboxShader.SetMat4("projection", projection);
-		// skybox cube
-		glBindVertexArray(skyboxVAO);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap.GetID());
-		glDrawArrays(GL_TRIANGLES, 0, 36);
-		glBindVertexArray(0);
-		glDepthFunc(GL_LESS); // set depth function back to default
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.

@@ -2,6 +2,7 @@
 #include <memory>
 
 class World;
+class Settings;
 
 class GlobalInstance
 {
@@ -13,9 +14,13 @@ public:
 
 	void HandleInput(struct GLFWwindow *window);
 
+	const Settings* GetSettings() const;
+
 protected:
 
 	World* mWorld;
+
+	Settings* mSettings;
 
 private:
 

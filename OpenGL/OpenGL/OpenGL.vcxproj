@@ -138,6 +138,8 @@
     <ClCompile Include="Sources\Material.cpp" />
     <ClCompile Include="Sources\Mesh.cpp" />
     <ClCompile Include="Sources\Model.cpp" />
+    <ClCompile Include="Sources\PrimitiveManager.cpp" />
+    <ClCompile Include="Sources\Settings.cpp" />
     <ClCompile Include="Sources\Shader.cpp" />
     <ClCompile Include="Sources\Source.cpp" />
     <ClCompile Include="Sources\Texture.cpp" />
@@ -151,6 +153,8 @@
     <ClInclude Include="Headers\Material.h" />
     <ClInclude Include="Headers\Mesh.h" />
     <ClInclude Include="Headers\Model.h" />
+    <ClInclude Include="Headers\PrimitiveManager.h" />
+    <ClInclude Include="Headers\Settings.h" />
     <ClInclude Include="Headers\Shader.h" />
     <ClInclude Include="Headers\stb_image.h" />
     <ClInclude Include="Headers\Texture.h" />
