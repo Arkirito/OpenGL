@@ -65,7 +65,7 @@ void PrimitiveManager::DrawCube(Shader & shader, Camera & camera, glm::vec3 posi
 	glBindVertexArray(0);
 }
 
-void PrimitiveManager::DrawQuad(Shader & shader, Camera & camera, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale, Texture * diffuse, Texture * specular)
+void PrimitiveManager::DrawQuad(Shader & shader, Camera & camera, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale, Texture * diffuse, Texture * specular, Texture * normal)
 {
 	const Settings* settings = GlobalInstance::GetInstance()->GetSettings();
 
@@ -104,6 +104,10 @@ void PrimitiveManager::DrawQuad(Shader & shader, Camera & camera, glm::vec3 posi
 		specular->Bind();
 		shader.SetInt("material.texture_specular1", 1);
 		shader.SetFloat("material.shininess", 16.0);
+
+		glActiveTexture(GL_TEXTURE2);
+		normal->Bind();
+		shader.SetInt("material.texture_normal1", 2);
 		//
 		glActiveTexture(GL_TEXTURE0);
 	}

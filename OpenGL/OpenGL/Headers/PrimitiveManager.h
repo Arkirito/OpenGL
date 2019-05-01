@@ -6,7 +6,7 @@ class PrimitiveManager
 {
 public:
 	static void DrawCube(class Shader & shader, class Camera & camera, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale, class Texture * diffuse, class Texture * specular);
-	static void DrawQuad(class Shader & shader, class Camera & camera, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale, class Texture * diffuse, class Texture * specular);
+	static void DrawQuad(class Shader & shader, class Camera & camera, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale, class Texture * diffuse, class Texture * specular, class Texture * normal);
 	static void DrawSkybox(class Shader & shader,class Camera & camera,class Cubemap& cubemap);
 
 protected:

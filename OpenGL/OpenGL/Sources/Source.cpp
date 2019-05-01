@@ -301,9 +301,13 @@ int main()
 			}
 		}
 
-		PrimitiveManager::DrawQuad(baseShader, camera, glm::vec3(0, 0, 0), glm::vec3(-90, 0, 0), glm::vec3(50, 50, 1), woodenFloor_Diffuse, woodenFloor_Height);
-		PrimitiveManager::DrawCube(baseShader, camera, glm::vec3(glm::sin(glfwGetTime()) * 10, 0, glm::cos(glfwGetTime()) * 10), glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), cubeDiffuse, cubeSpecular);
-		PrimitiveManager::DrawCube(baseShader, camera, glm::vec3(glm::sin(glfwGetTime()) * 10 + 4, 10, glm::cos(glfwGetTime()) * 10 + 8), glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), cubeDiffuse, cubeSpecular);
+		PrimitiveManager::DrawQuad(baseShader, camera, glm::vec3(0, 0, 0), glm::vec3(-90, 0, 0), glm::vec3(50, 50, 1), woodenFloor_Diffuse, woodenFloor_Height, woodenFloor_Normal);
+		//PrimitiveManager::DrawCube(baseShader, camera, glm::vec3(glm::sin(glfwGetTime()/2) * 10, 2, glm::cos(glfwGetTime()/2) * 10), glm::vec3(0, 0, 0), glm::vec3(2, 2, 2), cubeDiffuse, cubeSpecular);
+		//PrimitiveManager::DrawCube(baseShader, camera, glm::vec3(glm::sin(glfwGetTime()) * 10 + 4, 10, glm::cos(glfwGetTime()) * 10 + 8), glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), cubeDiffuse, cubeSpecular);
+		
+		
+		//model.Draw(baseShader);
+
 		PrimitiveManager::DrawSkybox(skyboxShader, camera, cubemap);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);

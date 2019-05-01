@@ -5,6 +5,7 @@ in vec2 TexCoords;
 
 in vec3 FragPos;  
 in vec3 Normal; 
+in mat3 TBN;
 
 uniform sampler2D ourTexture;
 uniform vec3 viewPos;
@@ -17,6 +18,7 @@ struct Material {
     sampler2D texture_diffuse3;
     sampler2D texture_specular1;
     sampler2D texture_specular2;
+	sampler2D texture_normal1;
 }; 
   
 uniform Material material;
@@ -42,7 +44,7 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
     vec3 ambient = light.ambient * vec3(texture(material.texture_diffuse1, TexCoords));
     vec3 diffuse = light.diffuse * diff * vec3(texture(material.texture_diffuse1, TexCoords));
     vec3 specular = light.specular * spec * vec3(texture(material.texture_specular1, TexCoords));
-    return (ambient + diffuse + specular);
+    return (ambient + diffuse); // TODO: Fix specular
 }  
 
 struct PointLight {    
@@ -112,7 +114,7 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
         vec3 ambient  = light.ambient  * vec3(texture(material.texture_diffuse1, TexCoords));
         vec3 diffuse  = light.diffuse  * diff * vec3(texture(material.texture_diffuse1, TexCoords));
         vec3 specular = light.specular * spec * vec3(texture(material.texture_specular1, TexCoords));
-        return (ambient + diffuse + specular) * intensity;
+        return (ambient + diffuse) * intensity; // TODO: Fix specular
     }
     else  // else, use ambient light so scene isn't completely dark outside the spotlight.
 	{
@@ -123,16 +125,21 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
 void main()
 {
     // properties
-    vec3 norm = normalize(Normal);
+    //vec3 normal = normalize(Normal);
+
+	vec3 normal = texture(material.texture_normal1, TexCoords).rgb;
+    normal = normalize(normal * 2.0 - 1.0);   
+    normal = normalize(TBN * normal); 
+
     vec3 viewDir = normalize(viewPos - FragPos);
 
     // phase 1: Directional lighting
-    vec3 result = CalcDirLight(dirLight, norm, viewDir);
+    vec3 result = CalcDirLight(dirLight, normal, viewDir);
     // phase 2: Point lights
     for(int i = 0; i < NR_POINT_LIGHTS; i++)
-       result += CalcPointLight(pointLights[i], norm, FragPos, viewDir);    
+       result += CalcPointLight(pointLights[i], normal, FragPos, viewDir);    
     // phase 3: Spot light
-    //result += CalcSpotLight(spotLight, norm, FragPos, viewDir);    
+    result += CalcSpotLight(spotLight, normal, FragPos, viewDir);    
     
     FragColor = vec4(result, 1.0);
 }
