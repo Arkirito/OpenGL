@@ -69,7 +69,7 @@ uniform PointLight pointLights[NR_POINT_LIGHTS];
 
 vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec2 texCoords)
 {
-    vec3 lightDir = normalize(light.position - fragPos);
+    vec3 lightDir = normalize(TBN * light.position - fragPos);
     // diffuse shading
     float diff = max(dot(normal, lightDir), 0.0);
     // specular shading
@@ -233,9 +233,9 @@ void main()
     vec3 result = CalcDirLight(dirLight, normal, viewDir, texCoords);
     // phase 2: Point lights
     for(int i = 0; i < NR_POINT_LIGHTS; i++)
-       result += CalcPointLight(pointLights[i], normal, FragPos, viewDir, texCoords);    
+       result += CalcPointLight(pointLights[i], normal, TangentFragPos, viewDir, texCoords);    
     // phase 3: Spot light
-    result += CalcSpotLight(spotLight, normal, FragPos, viewDir, texCoords);    
+    result += CalcSpotLight(spotLight, normal, TangentFragPos, viewDir, texCoords);    
     
     FragColor = vec4(result, 1.0);
 }

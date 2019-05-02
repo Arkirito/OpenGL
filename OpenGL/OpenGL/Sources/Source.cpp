@@ -95,10 +95,10 @@ glm::vec3 pointLightPositions[] = {
 };
 
 glm::vec3 pointLightColors[] = {
-	glm::vec3(1.7f,  1.2f,  1.0f),
-	glm::vec3(2.3f,  3.3f, 4.0f),
-	glm::vec3(4.0f,  2.0f, 12.0f),
-	glm::vec3(1.0f,  1.0f, 3.0f)
+	glm::vec3(12.7f,  13.2f,  14.0f),
+	glm::vec3(22.3f,  43.3f, 41.0f),
+	glm::vec3(44.0f,  21.0f, 12.0f),
+	glm::vec3(1.0f,  1.0f, 30.0f)
 };
 
 unsigned int indices[] = {  // note that we start from 0!
@@ -173,6 +173,7 @@ int main()
 	Shader grayscaleShader("Shaders/screenShader.vs", "Shaders/grayscale.fs");
 	Shader kernelShader("Shaders/screenShader.vs", "Shaders/kernel.fs");
 	Shader blurShader("Shaders/screenShader.vs", "Shaders/blur.fs"); //TODO: blur is a kernel effect too, maybe there is a reason to create a unified solution here 
+	Shader exposureToneMappingShader("Shaders/screenShader.vs", "Shaders/exposureToneMapping.fs");
 
 	Camera camera(glm::vec3(0.0f, 8.0f, 25.0f), glm::vec3(0.0f, 8.0f, 0.0f));
 
@@ -208,7 +209,7 @@ int main()
 	unsigned int textureColorbuffer;
 	glGenTextures(1, &textureColorbuffer);
 	glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, ViewportWidh, ViewportHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, ViewportWidh, ViewportHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer, 0);
@@ -321,7 +322,8 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		// Post process shader:
-		screenShader.Use();
+		exposureToneMappingShader.Use();
+		exposureToneMappingShader.SetFloat("exposure", 0.2f);
 		glBindVertexArray(quadVAO);
 		glBindTexture(GL_TEXTURE_2D, textureColorbuffer);	// use the color attachment texture as the texture of the quad plane
 		glDrawArrays(GL_TRIANGLES, 0, 6);
