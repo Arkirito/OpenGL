@@ -17,9 +17,7 @@
 #include "Model.h"
 #include "Cubemap.h"
 #include "PrimitiveManager.h"
-
-#define ViewportWidh 1600.f
-#define ViewportHeight 720.f
+#include "Settings.h"
 
 /*float vertices[] = {
 
@@ -135,13 +133,15 @@ void processInput(GLFWwindow *window)
 
 int main()
 {
+	const Settings& settings = *GlobalInstance::GetInstance()->GetSettings();
+
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	//glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // MacOS
 
-	GLFWwindow* window = glfwCreateWindow(ViewportWidh, ViewportHeight, "LearnOpenGL", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(settings.ViewportWidth, settings.ViewportHeight, "LearnOpenGL", NULL, NULL);
 	if (window == NULL)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;
@@ -156,7 +156,7 @@ int main()
 		return -1;
 	}
 
-	glViewport(0, 0, ViewportWidh, ViewportHeight);
+	glViewport(0, 0, settings.ViewportWidth, settings.ViewportHeight);
 
 	glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) {glViewport(0, 0, width, height); });
 
@@ -174,6 +174,8 @@ int main()
 	Shader kernelShader("Shaders/screenShader.vs", "Shaders/kernel.fs");
 	Shader blurShader("Shaders/screenShader.vs", "Shaders/blur.fs"); //TODO: blur is a kernel effect too, maybe there is a reason to create a unified solution here 
 	Shader exposureToneMappingShader("Shaders/screenShader.vs", "Shaders/exposureToneMapping.fs");
+	Shader gaussianBlur("Shaders/screenShader.vs", "Shaders/gaussianBlur.fs");
+	Shader bloom("Shaders/screenShader.vs", "Shaders/bloom.fs"); // just blends blur+brightness
 
 	Camera camera(glm::vec3(0.0f, 8.0f, 25.0f), glm::vec3(0.0f, 8.0f, 0.0f));
 
@@ -206,18 +208,21 @@ int main()
 	glGenFramebuffers(1, &framebuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 	// create a color attachment texture
-	unsigned int textureColorbuffer;
-	glGenTextures(1, &textureColorbuffer);
-	glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, ViewportWidh, ViewportHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer, 0);
+	unsigned int textureColorbuffers[2]; // 2 - for bloom
+	glGenTextures(2, textureColorbuffers);
+	for (unsigned int i = 0; i < 2; i++)
+	{
+		glBindTexture(GL_TEXTURE_2D, textureColorbuffers[i]);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, settings.ViewportWidth, settings.ViewportHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, textureColorbuffers[i], 0);
+	}
 	// create a renderbuffer object for depth and stencil attachment (we won't be sampling these)
 	unsigned int rbo;
 	glGenRenderbuffers(1, &rbo);
 	glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, ViewportWidh, ViewportHeight); // use a single renderbuffer object for both a depth AND stencil buffer.
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, settings.ViewportWidth, settings.ViewportHeight); // use a single renderbuffer object for both a depth AND stencil buffer.
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo); // now actually attach it
 																								  // now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
@@ -235,6 +240,26 @@ int main()
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+
+	unsigned int pingpongFBO[2];
+	unsigned int pingpongBuffer[2];
+	glGenFramebuffers(2, pingpongFBO);
+	glGenTextures(2, pingpongBuffer);
+	for (unsigned int i = 0; i < 2; i++)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[i]);
+		glBindTexture(GL_TEXTURE_2D, pingpongBuffer[i]);
+		glTexImage2D(
+			GL_TEXTURE_2D, 0, GL_RGB16F, GlobalInstance::GetInstance()->GetSettings()->ViewportWidth, GlobalInstance::GetInstance()->GetSettings()->ViewportHeight, 0, GL_RGB, GL_FLOAT, NULL
+		);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glFramebufferTexture2D(
+			GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pingpongBuffer[i], 0
+		);
+	}
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -256,6 +281,9 @@ int main()
 
 		glCullFace(GL_FRONT);
 		glFrontFace(GL_CW);
+
+		unsigned int attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+		glDrawBuffers(2, attachments);
 
 		baseShader.Use();
 
@@ -296,14 +324,14 @@ int main()
 		{
 			// spot lights
 			coloredShader.Use();
-			coloredShader.SetVec4("mColor", glm::vec4(0.5f, 0.5f, 0.5f, 1.f));
-			PrimitiveManager::DrawCube(coloredShader, camera, camera.GetPosition(), glm::vec3(0, 0, 0), glm::vec3(0.1, 0.1, 0.1), cubeDiffuse, cubeSpecular);
+			coloredShader.SetVec4("mColor", glm::vec4(10.5f, 10.5f, 10.5f, 1.f));
+			PrimitiveManager::DrawCube(coloredShader, camera, camera.GetPosition(), glm::vec3(0, 0, 0), glm::vec3(0.3, 0.3, 0.3), cubeDiffuse, cubeSpecular);
 
 			// spoint lights
 			for (GLuint i = 0; i < 4; i++)
 			{
 				coloredShader.SetVec4("mColor", glm::vec4(pointLightColors[i].r, pointLightColors[i].g, pointLightColors[i].b, 1.f));
-				PrimitiveManager::DrawCube(coloredShader, camera, glm::vec3(pointLightPositions[i].x, pointLightPositions[i].y, pointLightPositions[i].z), glm::vec3(0, 0, 0), glm::vec3(0.1, 0.1, 0.1), cubeDiffuse, cubeSpecular);
+				PrimitiveManager::DrawCube(coloredShader, camera, glm::vec3(pointLightPositions[i].x, pointLightPositions[i].y, pointLightPositions[i].z), glm::vec3(0, 0, 0), glm::vec3(1.0, 1.0, 1.0), cubeDiffuse, cubeSpecular);
 			}
 		}
 
@@ -315,17 +343,46 @@ int main()
 
 		PrimitiveManager::DrawSkybox(skyboxShader, camera, cubemap);
 
+		
+
+		bool horizontal = true, first_iteration = true;
+		int amount = 10;
+		gaussianBlur.Use();
+		for (unsigned int i = 0; i < amount; i++)
+		{
+			glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[horizontal]);
+			gaussianBlur.SetInt("horizontal", horizontal);
+			glBindTexture(
+				GL_TEXTURE_2D, first_iteration ? textureColorbuffers[1] : pingpongBuffer[!horizontal]
+			);
+
+			glBindVertexArray(quadVAO);
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+
+			horizontal = !horizontal;
+			if (first_iteration)
+				first_iteration = false;
+		}
+
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
 								  // clear all relevant buffers
 		glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // set clear color to white (not really necessery actually, since we won't be able to see behind the quad anyways)
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		// Post process shader:
-		exposureToneMappingShader.Use();
-		exposureToneMappingShader.SetFloat("exposure", 0.2f);
+	    // Post process shader:
+		bloom.Use();
+		bloom.SetFloat("exposure", 0.2f);
 		glBindVertexArray(quadVAO);
-		glBindTexture(GL_TEXTURE_2D, textureColorbuffer);	// use the color attachment texture as the texture of the quad plane
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, textureColorbuffers[0]);	// use the color attachment texture as the texture of the quad plane
+		bloom.SetInt("screenTexture", 0);
+
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, pingpongBuffer[!horizontal]);	// use the color attachment texture as the texture of the quad plane
+		bloom.SetInt("brightnessTexture", 1);
+
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 
 		glfwSwapBuffers(window);
