@@ -1,6 +1,9 @@
 #version 330 core
 layout (location = 0) out vec4 FragColor;
 layout (location = 1) out vec4 BrightColor;
+layout (location = 3) out vec4 gNormal;
+layout (location = 2) out vec4 gPosition;
+layout (location = 4) out vec4 gAlbedoSpec;
 
 in vec2 TexCoords;
 
@@ -10,6 +13,9 @@ in mat3 TBN;
 
 in vec3 TangentViewPos;
 in vec3 TangentFragPos;
+
+in vec3 outPos;
+
 
 uniform sampler2D ourTexture;
 //uniform vec3 viewPos;
@@ -238,11 +244,26 @@ void main()
     // phase 3: Spot light
     result += CalcSpotLight(spotLight, normal, TangentFragPos, viewDir, texCoords);    
     
-    FragColor = vec4(result, 1.0);
+    FragColor = vec4(result, 1.0); // forward lightning result
 
 	float brightness = dot(FragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
     if(brightness > 10.0)
         BrightColor = vec4(FragColor.rgb, 1.0);
     else
         BrightColor = vec4(0.0, 0.0, 0.0, 1.0);
+
+	    // store the fragment position vector in the first gbuffer texture
+    //gPosition = TangentFragPos;
+	// gPosition = vec4(texture(material.texture_diffuse1, texCoords).rgb1, 1.0);
+    // also store the per-fragment normals into the gbuffer
+    // gNormal = vec4(normalize(normal), 1.0);
+    // and the diffuse per-fragment color
+    //gAlbedoSpec.rgb = texture(material.texture_diffuse1, texCoords).rgb;
+    // store specular intensity in gAlbedoSpec's alpha component
+    //gAlbedoSpec.a = texture(material.texture_specular1, texCoords).r;
+
+	gAlbedoSpec = vec4(texture(material.texture_diffuse1, texCoords).rgb, 1.0);
+	gPosition = vec4(FragPos, 1.0);
+
+	gNormal = vec4(Normal, 1.0);
 }

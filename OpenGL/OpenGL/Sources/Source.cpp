@@ -2,6 +2,8 @@
 #include <glfw3.h>
 
 #include <iostream>
+#include <stdlib.h>     /* srand, rand */
+#include <time.h>       /* time */
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -176,6 +178,7 @@ int main()
 	Shader exposureToneMappingShader("Shaders/screenShader.vs", "Shaders/exposureToneMapping.fs");
 	Shader gaussianBlur("Shaders/screenShader.vs", "Shaders/gaussianBlur.fs");
 	Shader bloom("Shaders/screenShader.vs", "Shaders/bloom.fs"); // just blends blur+brightness
+	Shader defferedShading("Shaders/screenShader.vs", "Shaders/defferedShading.fs");
 
 	Camera camera(glm::vec3(0.0f, 8.0f, 25.0f), glm::vec3(0.0f, 8.0f, 0.0f));
 
@@ -208,12 +211,12 @@ int main()
 	glGenFramebuffers(1, &framebuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 	// create a color attachment texture
-	unsigned int textureColorbuffers[2]; // 2 - for bloom
-	glGenTextures(2, textureColorbuffers);
-	for (unsigned int i = 0; i < 2; i++)
+	unsigned int textureColorbuffers[5]; // 0 - color, 1 - brightness, 2 - position, 3 - normals, 4 - specular
+	glGenTextures(5, textureColorbuffers);
+	for (unsigned int i = 0; i < 5; i++)
 	{
 		glBindTexture(GL_TEXTURE_2D, textureColorbuffers[i]);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, settings.ViewportWidth, settings.ViewportHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, settings.ViewportWidth, settings.ViewportHeight, 0, GL_RGBA, GL_FLOAT, NULL);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, textureColorbuffers[i], 0);
@@ -261,6 +264,18 @@ int main()
 		);
 	}
 
+	srand(time(NULL));
+
+	std::vector<glm::vec3> lightPositions;
+	std::vector<glm::vec3> lightColors;
+
+	for (int i = 0; i < 10; ++i)
+	{
+		lightPositions.push_back(glm::vec3(rand() % 20 - 10, rand() % 2, rand() % 20 - 10));
+		lightColors.push_back(glm::vec3(rand() % 10, rand() % 10, rand() % 10));
+	}
+
+
 	while (!glfwWindowShouldClose(window))
 	{
 		GlobalInstance::GetInstance()->HandleInput(window);
@@ -268,7 +283,7 @@ int main()
 		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 
 		// rendering
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_STENCIL_TEST);
@@ -282,8 +297,8 @@ int main()
 		glCullFace(GL_FRONT);
 		glFrontFace(GL_CW);
 
-		unsigned int attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
-		glDrawBuffers(2, attachments);
+		unsigned int attachments[5] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4 };
+		glDrawBuffers(5, attachments);
 
 		baseShader.Use();
 
@@ -313,15 +328,13 @@ int main()
 			baseShader.SetFloat(("pointLights[" + number + "].constant").c_str(), 1.0f);
 			baseShader.SetFloat(("pointLights[" + number + "].linear").c_str(), 0.09f);
 			baseShader.SetFloat(("pointLights[" + number + "].quadratic").c_str(), 0.032f);
-
-			
 		}
 
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		//Lights
-		{
+		/*{
 			// spot lights
 			coloredShader.Use();
 			coloredShader.SetVec4("mColor", glm::vec4(10.5f, 10.5f, 10.5f, 1.f));
@@ -333,7 +346,7 @@ int main()
 				coloredShader.SetVec4("mColor", glm::vec4(pointLightColors[i].r, pointLightColors[i].g, pointLightColors[i].b, 1.f));
 				PrimitiveManager::DrawCube(coloredShader, camera, glm::vec3(pointLightPositions[i].x, pointLightPositions[i].y, pointLightPositions[i].z), glm::vec3(0, 0, 0), glm::vec3(1.0, 1.0, 1.0), cubeDiffuse, cubeSpecular);
 			}
-		}
+		}*/
 
 		PrimitiveManager::DrawQuad(baseShader, camera, glm::vec3(0, 0, 0), glm::vec3(-90, 0, 0), glm::vec3(15, 15, 1), brickWall_Diffuse, brickWall_Height, brickWall_Normal, brickWall_Height);
 		//PrimitiveManager::DrawCube(baseShader, camera, glm::vec3(glm::sin(glfwGetTime()/2) * 10, 2, glm::cos(glfwGetTime()/2) * 10), glm::vec3(0, 0, 0), glm::vec3(2, 2, 2), cubeDiffuse, cubeSpecular);
@@ -341,9 +354,7 @@ int main()
 		
 		//model.Draw(baseShader);
 
-		PrimitiveManager::DrawSkybox(skyboxShader, camera, cubemap);
-
-		
+		//PrimitiveManager::DrawSkybox(skyboxShader, camera, cubemap);
 
 		bool horizontal = true, first_iteration = true;
 		int amount = 10;
@@ -370,19 +381,55 @@ int main()
 		glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // set clear color to white (not really necessery actually, since we won't be able to see behind the quad anyways)
 		glClear(GL_COLOR_BUFFER_BIT);
 
+		//screenShader.Use();
+
+		/*glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, textureColorbuffers[0]);	// use the color attachment texture as the texture of the quad plane
+		bloom.SetInt("screenTexture", 0);
+
+		glBindVertexArray(quadVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);*/
+
 	    // Post process shader:
-		bloom.Use();
+		/*bloom.Use();
 		bloom.SetFloat("exposure", 0.2f);
 		glBindVertexArray(quadVAO);
 
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, textureColorbuffers[0]);	// use the color attachment texture as the texture of the quad plane
+		glBindTexture(GL_TEXTURE_2D, textureColorbuffers[1]);	// use the color attachment texture as the texture of the quad plane
 		bloom.SetInt("screenTexture", 0);
 
 		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, pingpongBuffer[!horizontal]);	// use the color attachment texture as the texture of the quad plane
+		glBindTexture(GL_TEXTURE_2D, pingpongBuffer[!horizontal]);e
 		bloom.SetInt("brightnessTexture", 1);
 
+		glDrawArrays(GL_TRIANGLES, 0, 6);*/
+
+		defferedShading.Use();
+
+		defferedShading.SetVec3("viewPos", camera.GetPosition());
+		defferedShading.SetFloat("exposure", 0.1f);
+
+		glBindVertexArray(quadVAO);
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, textureColorbuffers[2]);
+		defferedShading.SetInt("gPosition", 0);
+
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, textureColorbuffers[3]);
+		defferedShading.SetInt("gNormal", 1);
+
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, textureColorbuffers[4]);
+		defferedShading.SetInt("gAlbedoSpec", 2);
+
+		for (int i = 0; i < 10; ++i)
+		{
+			defferedShading.SetVec3(("lights[" + std::to_string(i) + "].Position").c_str(), lightPositions[i]);
+			defferedShading.SetVec3(("lights[" + std::to_string(i) + "].Color").c_str(), lightColors[i]);
+		}
+		
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 
 		glfwSwapBuffers(window);
