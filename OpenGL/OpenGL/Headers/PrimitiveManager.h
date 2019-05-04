@@ -10,7 +10,8 @@ public:
 		class Texture * diffuse, 
 		class Texture * specular, 
 		class Texture * normal,
-		class Texture * depth);
+		class Texture * depth,
+		unsigned int shadow);
 	static void DrawSkybox(class Shader & shader,class Camera & camera,class Cubemap& cubemap);
 
 protected:

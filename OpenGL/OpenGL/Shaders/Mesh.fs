@@ -16,8 +16,9 @@ in vec3 TangentFragPos;
 
 in vec3 outPos;
 
+in vec4 FragPosLightSpace;
 
-uniform sampler2D ourTexture;
+uniform sampler2D shadowMap;
 //uniform vec3 viewPos;
 
 struct Material {
@@ -173,6 +174,36 @@ vec2 SteppedParallaxMapping(vec2 texCoords, vec3 viewDir)
     return currentTexCoords;
 }
 
+float ShadowCalculation(vec4 fragPosLightSpace)
+{
+     // perform perspective divide
+    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+    // transform to [0,1] range
+    projCoords = projCoords * 0.5 + 0.5;
+    // get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
+    float closestDepth = texture(shadowMap, projCoords.xy).r; 
+    // get depth of current fragment from light's perspective
+    float currentDepth = projCoords.z;
+    // check whether current frag pos is in shadow
+    float bias = 0.005;
+    vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
+    float shadow = 0.0;
+	for(int x = -1; x <= 1; ++x)
+    {
+        for(int y = -1; y <= 1; ++y)
+        {   
+            float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r; 
+            shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;        
+        }     
+    }
+    shadow /= 9.0;
+
+	if(projCoords.z > 1.0)
+        shadow = 0.0;
+    
+    return shadow;
+}
+
 vec2 ParallaxOcclusionMapping(vec2 texCoords, vec3 viewDir)
 { 
     // number of depth layers
@@ -244,7 +275,10 @@ void main()
     // phase 3: Spot light
     result += CalcSpotLight(spotLight, normal, TangentFragPos, viewDir, texCoords);    
     
-    FragColor = vec4(result, 1.0); // forward lightning result
+	// calculate shadow
+    float shadow = ShadowCalculation(FragPosLightSpace); 
+
+    FragColor = vec4((1 - shadow) * result, 1.0); // forward lightning result
 
 	float brightness = dot(FragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
     if(brightness > 10.0)
@@ -262,7 +296,7 @@ void main()
     // store specular intensity in gAlbedoSpec's alpha component
     //gAlbedoSpec.a = texture(material.texture_specular1, texCoords).r;
 
-	gAlbedoSpec = vec4(texture(material.texture_diffuse1, texCoords).rgb, 1.0);
+	gAlbedoSpec = vec4((1 - shadow) * texture(material.texture_diffuse1, texCoords).rgb, 1.0);
 	gPosition = vec4(FragPos, 1.0);
 
 	gNormal = vec4(Normal, 1.0);

@@ -2,7 +2,7 @@
 class Settings
 {
 public:
-	float ViewportWidth = 1600.f;
-	float ViewportHeight = 720.f;
+	float ViewportWidth = 1024.f;
+	float ViewportHeight = 1024.f;
 };
 

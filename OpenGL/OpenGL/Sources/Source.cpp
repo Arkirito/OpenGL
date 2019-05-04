@@ -133,6 +133,17 @@ void processInput(GLFWwindow *window)
 		glfwSetWindowShouldClose(window, true);
 }
 
+void DrawScene(Shader & shader, Camera & camera,
+	Texture * diffuse,
+	Texture * specular,
+	Texture * normal,
+	Texture * depth, 
+	unsigned int shadow)
+{
+	PrimitiveManager::DrawQuad(shader, camera, glm::vec3(0, 0, 0), glm::vec3(-90, 0, 0), glm::vec3(15, 15, 1), diffuse, depth, normal, depth, shadow);
+	PrimitiveManager::DrawQuad(shader, camera, glm::vec3(0, 0, 0), glm::vec3(0, 90, 0), glm::vec3(15, 15, 1), diffuse, depth, normal, depth, shadow);
+}
+
 int main()
 {
 	const Settings& settings = *GlobalInstance::GetInstance()->GetSettings();
@@ -158,8 +169,6 @@ int main()
 		return -1;
 	}
 
-	glViewport(0, 0, settings.ViewportWidth, settings.ViewportHeight);
-
 	glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) {glViewport(0, 0, width, height); });
 
 	// Shaders
@@ -168,6 +177,7 @@ int main()
 	Shader skyboxShader("Shaders/skybox.vs", "Shaders/skybox.fs");
 	Shader reflectionShader("Shaders/reflection.vs", "Shaders/reflection.fs");
 	Shader refractionShader("Shaders/reflection.vs", "Shaders/refraction.fs");
+	Shader shadowDepthShader("Shaders/shadowDepth.vs", "Shaders/shadowDepth.fs");
 
 	// Post-Process
 	Shader screenShader("Shaders/screenShader.vs", "Shaders/screenShader.fs");
@@ -179,6 +189,7 @@ int main()
 	Shader gaussianBlur("Shaders/screenShader.vs", "Shaders/gaussianBlur.fs");
 	Shader bloom("Shaders/screenShader.vs", "Shaders/bloom.fs"); // just blends blur+brightness
 	Shader defferedShading("Shaders/screenShader.vs", "Shaders/defferedShading.fs");
+	Shader debugShadowDepth("Shaders/screenShader.vs", "Shaders/pp_shadowDepth.fs");
 
 	Camera camera(glm::vec3(0.0f, 8.0f, 25.0f), glm::vec3(0.0f, 8.0f, 0.0f));
 
@@ -275,19 +286,56 @@ int main()
 		lightColors.push_back(glm::vec3(rand() % 10, rand() % 10, rand() % 10));
 	}
 
+	// Shadow
+	unsigned int depthMapFBO;
+	unsigned int depthMap;
+	const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+	{
+		glGenFramebuffers(1, &depthMapFBO);
+
+		glGenTextures(1, &depthMap);
+		glBindTexture(GL_TEXTURE_2D, depthMap);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
+			SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+		float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+		glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+		glDrawBuffer(GL_NONE);
+		glReadBuffer(GL_NONE);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
 
 	while (!glfwWindowShouldClose(window))
 	{
 		GlobalInstance::GetInstance()->HandleInput(window);
 
-		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-
-		// rendering
-		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_STENCIL_TEST);
 		glEnable(GL_CULL_FACE);
+
+		// Shadow rendering
+		{
+			// 1. first render to depth map
+			glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+			glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+			glClear(GL_DEPTH_BUFFER_BIT);
+			glCullFace(GL_FRONT);
+			DrawScene(shadowDepthShader, camera, brickWall_Diffuse, brickWall_Height, brickWall_Normal, brickWall_Height, depthMap);
+			glCullFace(GL_BACK);
+			glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+		}
+		
+		glViewport(0, 0, settings.ViewportWidth, settings.ViewportHeight);
+
+		// rendering
+		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
 		glDepthFunc(GL_LESS);
 
@@ -301,6 +349,18 @@ int main()
 		glDrawBuffers(5, attachments);
 
 		baseShader.Use();
+
+		// shadow
+		{
+			float near_plane = 0.2f, far_plane = 40.5f;
+			glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
+			glm::mat4 lightView = glm::lookAt(glm::vec3(4.0f, 4.0f, 14.0f),
+				glm::vec3(0.0f, 0.0f, 0.0f),
+				glm::vec3(0.0f, 1.0f, 0.0f));
+			glm::mat4 lightSpaceMatrix = lightProjection * lightView;
+
+			baseShader.SetMat4("lightSpaceMatrix", lightSpaceMatrix);
+		}
 
 		// Coordinates
 
@@ -348,10 +408,11 @@ int main()
 			}
 		}*/
 
-		PrimitiveManager::DrawQuad(baseShader, camera, glm::vec3(0, 0, 0), glm::vec3(-90, 0, 0), glm::vec3(15, 15, 1), brickWall_Diffuse, brickWall_Height, brickWall_Normal, brickWall_Height);
+		baseShader.Use();
+
+		DrawScene(baseShader, camera, brickWall_Diffuse, brickWall_Height, brickWall_Normal, brickWall_Height, depthMap);
+
 		//PrimitiveManager::DrawCube(baseShader, camera, glm::vec3(glm::sin(glfwGetTime()/2) * 10, 2, glm::cos(glfwGetTime()/2) * 10), glm::vec3(0, 0, 0), glm::vec3(2, 2, 2), cubeDiffuse, cubeSpecular);
-		//PrimitiveManager::DrawCube(baseShader, camera, glm::vec3(glm::sin(glfwGetTime()) * 10 + 4, 10, glm::cos(glfwGetTime()) * 10 + 8), glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), cubeDiffuse, cubeSpecular);
-		
 		//model.Draw(baseShader);
 
 		//PrimitiveManager::DrawSkybox(skyboxShader, camera, cubemap);
@@ -431,6 +492,15 @@ int main()
 		}
 		
 		glDrawArrays(GL_TRIANGLES, 0, 6);
+
+		/*debugShadowDepth.Use();
+		//debugShadowDepth.SetFloat("exposure", 0.1f);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, depthMap);	// use the color attachment texture as the texture of the quad plane
+		debugShadowDepth.SetInt("screenTexture", 0);
+		debugShadowDepth.SetFloat("near_plane", 1.f);
+		debugShadowDepth.SetFloat("far_plane", 40.5f);
+		glDrawArrays(GL_TRIANGLES, 0, 6);*/
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();

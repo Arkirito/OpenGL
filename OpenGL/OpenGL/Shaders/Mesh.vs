@@ -17,7 +17,11 @@ uniform mat4 uModel;
 out vec3 TangentViewPos;
 out vec3 TangentFragPos;
 
+out vec4 FragPosLightSpace;
+
 uniform vec3 viewPos;
+
+uniform mat4 lightSpaceMatrix;
 
 void main()
 {
@@ -32,6 +36,8 @@ void main()
     
 	TangentViewPos  = TBN * viewPos;
     TangentFragPos  = TBN * FragPos;
+
+	FragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0);
 
 	gl_Position = PVM * vec4(aPos, 1.0);
 }

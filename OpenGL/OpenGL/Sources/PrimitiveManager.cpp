@@ -69,7 +69,8 @@ void PrimitiveManager::DrawQuad(Shader & shader, Camera & camera, glm::vec3 posi
 	Texture * diffuse, 
 	Texture * specular, 
 	Texture * normal, 
-	Texture * depth)
+	Texture * depth,
+	unsigned int shadow)
 {
 	const Settings* settings = GlobalInstance::GetInstance()->GetSettings();
 
@@ -96,6 +97,19 @@ void PrimitiveManager::DrawQuad(Shader & shader, Camera & camera, glm::vec3 posi
 		shader.SetMat4("PVM", PVM);
 		shader.SetMat4("uModel", modelMatrix);
 		shader.SetVec3("viewPos", camera.GetPosition());
+
+		// shadow
+		{
+			float near_plane = 0.2f, far_plane = 40.5f;
+			glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
+			glm::mat4 lightView = glm::lookAt(glm::vec3(4.0f, 4.0f, 14.0f),
+				glm::vec3(0.0f, 0.0f, 0.0f),
+				glm::vec3(0.0f, 1.0f, 0.0f));
+			glm::mat4 lightSpaceMatrix = lightProjection * lightView;
+
+			shader.SetMat4("lightSpaceMatrix", lightSpaceMatrix);
+		}
+		
 	}
 
 	{
@@ -118,6 +132,11 @@ void PrimitiveManager::DrawQuad(Shader & shader, Camera & camera, glm::vec3 posi
 		glActiveTexture(GL_TEXTURE3);
 		depth->Bind();
 		shader.SetInt("material.texture_depth1", 3);
+
+		glActiveTexture(GL_TEXTURE4);
+		glBindTexture(GL_TEXTURE_2D, shadow);
+		shader.SetInt("shadowMap", 4);
+
 		//
 		glActiveTexture(GL_TEXTURE0);
 	}
