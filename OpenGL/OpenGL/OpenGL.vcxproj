@@ -70,12 +70,12 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(SolutionDir)\OpenGL\Headers;D:\GitHub\OpenGL\OpenGL\OpenGL\GLM;$(ProjectDir)\GLFW\include;$(ProjectDir)\GLAD\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)OpenGL\Headers;$(SolutionDir)OpenGL\GLM;$(ProjectDir)\GLFW\include;$(ProjectDir)\GLAD\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)\GLFW\lib-vc2015;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>D:\GitHub\OpenGL\OpenGL\OpenGL\GLAD\include;D:\GitHub\OpenGL\OpenGL\OpenGL\GLFW\include;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\GitHub\OpenGL\OpenGL\OpenGL\GLFW\lib-vc2015;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)OpenGL\GLAD\include;$(SolutionDir)OpenGL\GLFW\include;$(IncludePath);$(SolutionDir)\OpenGL\Headers</IncludePath>
+    <LibraryPath>$(SolutionDir)OpenGL\GLFW\lib-vc2015;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -90,6 +90,9 @@
       <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;opengl32.lib;glfw3.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)\OpenGL\Assimp\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <PostBuildEvent>
+      <Command>copy "$(SolutionDir)OpenGL\Assimp\lib\assimp-vc140-mt.dll" "$(TargetDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
