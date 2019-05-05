@@ -4,6 +4,7 @@
 #include <iostream>
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
+#include <random>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -20,6 +21,8 @@
 #include "Cubemap.h"
 #include "PrimitiveManager.h"
 #include "Settings.h"
+
+int config = 0;
 
 /*float vertices[] = {
 
@@ -131,6 +134,16 @@ void processInput(GLFWwindow *window)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
+
+	if (glfwGetKey(window, GLFW_KEY_0) == GLFW_PRESS)
+		config = 0;
+	else if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
+		config = 1;
+}
+
+float lerp(float a, float b, float f)
+{
+	return a + f * (b - a);
 }
 
 void DrawScene(Shader & shader, Camera & camera,
@@ -190,6 +203,7 @@ int main()
 	Shader bloom("Shaders/screenShader.vs", "Shaders/bloom.fs"); // just blends blur+brightness
 	Shader defferedShading("Shaders/screenShader.vs", "Shaders/defferedShading.fs");
 	Shader debugShadowDepth("Shaders/screenShader.vs", "Shaders/pp_shadowDepth.fs");
+	Shader shaderSSAO("Shaders/screenShader.vs", "Shaders/shaderSSAO.fs");
 
 	Camera camera(glm::vec3(0.0f, 8.0f, 25.0f), glm::vec3(0.0f, 8.0f, 0.0f));
 
@@ -232,6 +246,7 @@ int main()
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, textureColorbuffers[i], 0);
 	}
+
 	// create a renderbuffer object for depth and stencil attachment (we won't be sampling these)
 	unsigned int rbo;
 	glGenRenderbuffers(1, &rbo);
@@ -312,8 +327,62 @@ int main()
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
+	//SSAO Kernel
+
+	std::uniform_real_distribution<float> randomFloats(0.0, 1.0); // random floats between 0.0 - 1.0
+	std::default_random_engine generator;
+	std::vector<glm::vec3> ssaoKernel;
+	for (unsigned int i = 0; i < 64; ++i)
+	{
+		glm::vec3 sample(
+			randomFloats(generator) * 2.0 - 1.0,
+			randomFloats(generator) * 2.0 - 1.0,
+			randomFloats(generator)
+		);
+		sample = glm::normalize(sample);
+		sample *= randomFloats(generator);
+
+		float scale = (float)i / 64.0;
+		scale = lerp(0.1f, 1.0f, scale * scale);
+		sample *= scale;
+		ssaoKernel.push_back(sample);
+	}
+
+	std::vector<glm::vec3> ssaoNoise;
+	for (unsigned int i = 0; i < 16; i++)
+	{
+		glm::vec3 noise(
+			randomFloats(generator) * 2.0 - 1.0,
+			randomFloats(generator) * 2.0 - 1.0,
+			0.0f);
+		ssaoNoise.push_back(noise);
+	}
+
+	unsigned int noiseTexture;
+	glGenTextures(1, &noiseTexture);
+	glBindTexture(GL_TEXTURE_2D, noiseTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, 4, 4, 0, GL_RGB, GL_FLOAT, &ssaoNoise[0]);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	unsigned int ssaoFBO;
+	glGenFramebuffers(1, &ssaoFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
+
+	unsigned int ssaoColorBuffer;
+	glGenTextures(1, &ssaoColorBuffer);
+	glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, settings.ViewportWidth, settings.ViewportHeight, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssaoColorBuffer, 0);
+
 	while (!glfwWindowShouldClose(window))
 	{
+		processInput(window);
 		GlobalInstance::GetInstance()->HandleInput(window);
 
 		glEnable(GL_DEPTH_TEST);
@@ -442,6 +511,8 @@ int main()
 		glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // set clear color to white (not really necessery actually, since we won't be able to see behind the quad anyways)
 		glClear(GL_COLOR_BUFFER_BIT);
 
+
+
 		//screenShader.Use();
 
 		/*glActiveTexture(GL_TEXTURE0);
@@ -466,41 +537,91 @@ int main()
 
 		glDrawArrays(GL_TRIANGLES, 0, 6);*/
 
-		defferedShading.Use();
-
-		defferedShading.SetVec3("viewPos", camera.GetPosition());
-		defferedShading.SetFloat("exposure", 0.1f);
-
-		glBindVertexArray(quadVAO);
-
+		// use G-buffer to render SSAO texture
+		// 2. generate SSAO texture
+		// ------------------------
+		glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
+		glClear(GL_COLOR_BUFFER_BIT);
+		shaderSSAO.Use();
+		// Send kernel + rotation 
+		for (unsigned int i = 0; i < 64; ++i)
+			shaderSSAO.SetVec3("samples[" + std::to_string(i) + "]", ssaoKernel[i]);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, textureColorbuffers[2]);
-		defferedShading.SetInt("gPosition", 0);
+		shaderSSAO.SetInt("gPosition", 0);
 
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, textureColorbuffers[3]);
-		defferedShading.SetInt("gNormal", 1);
+		shaderSSAO.SetInt("gNormal", 1);
 
 		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, textureColorbuffers[4]);
-		defferedShading.SetInt("gAlbedoSpec", 2);
+		glBindTexture(GL_TEXTURE_2D, noiseTexture);
+		shaderSSAO.SetInt("texNoise", 2);
 
-		for (int i = 0; i < 10; ++i)
-		{
-			defferedShading.SetVec3(("lights[" + std::to_string(i) + "].Position").c_str(), lightPositions[i]);
-			defferedShading.SetVec3(("lights[" + std::to_string(i) + "].Color").c_str(), lightColors[i]);
-		}
-		
+		glm::mat4 projection;
+		projection = glm::perspective(glm::radians(45.0f), settings.ViewportWidth / settings.ViewportHeight, 0.1f, 100.0f);
+		shaderSSAO.SetMat4("projection", projection);
+
 		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		/*debugShadowDepth.Use();
 		//debugShadowDepth.SetFloat("exposure", 0.1f);
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, depthMap);	// use the color attachment texture as the texture of the quad plane
+		glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);	// use the color attachment texture as the texture of the quad plane
 		debugShadowDepth.SetInt("screenTexture", 0);
 		debugShadowDepth.SetFloat("near_plane", 1.f);
 		debugShadowDepth.SetFloat("far_plane", 40.5f);
 		glDrawArrays(GL_TRIANGLES, 0, 6);*/
+
+		/*			screenShader.Use();
+			screenShader.SetFloat("exposure", 0.2f);
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
+			screenShader.SetInt("screenTexture", 0);
+			glBindVertexArray(quadVAO);
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+			break;*/
+
+		switch (config)
+		{
+		case 1:
+		case 0:
+		default:
+			defferedShading.Use();
+
+			defferedShading.SetVec3("viewPos", camera.GetPosition());
+			defferedShading.SetFloat("exposure", 0.1f);
+
+			glBindVertexArray(quadVAO);
+
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, textureColorbuffers[2]);
+			defferedShading.SetInt("gPosition", 0);
+
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D, textureColorbuffers[3]);
+			defferedShading.SetInt("gNormal", 1);
+
+			glActiveTexture(GL_TEXTURE2);
+			glBindTexture(GL_TEXTURE_2D, textureColorbuffers[4]);
+			defferedShading.SetInt("gAlbedoSpec", 2);
+
+			glActiveTexture(GL_TEXTURE3);
+			glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
+			defferedShading.SetInt("ssao", 3);
+
+			for (int i = 0; i < 10; ++i)
+			{
+				defferedShading.SetVec3(("lights[" + std::to_string(i) + "].Position").c_str(), lightPositions[i]);
+				defferedShading.SetVec3(("lights[" + std::to_string(i) + "].Color").c_str(), lightColors[i]);
+			}
+
+			defferedShading.SetInt("useSSAO", config);
+
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+			break;
+		}
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();

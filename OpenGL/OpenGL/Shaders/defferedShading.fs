@@ -6,6 +6,7 @@ in vec2 TexCoords;
 uniform sampler2D gPosition;
 uniform sampler2D gNormal;
 uniform sampler2D gAlbedoSpec;
+uniform sampler2D ssao;
 
 struct Light {
     vec3 Position;
@@ -18,6 +19,8 @@ uniform vec3 viewPos;
 
 uniform float exposure;
 
+uniform int useSSAO = 0;
+
 void main()
 {             
     // retrieve data from G-buffer
@@ -25,9 +28,17 @@ void main()
     vec3 Normal = texture(gNormal, TexCoords).rgb;
     vec3 Albedo = texture(gAlbedoSpec, TexCoords).rgb;
     float Specular = texture(gAlbedoSpec, TexCoords).a;
-    
+    float AmbientOcclusion = texture(ssao, TexCoords).r;
+
+	vec3 ambient = vec3(0.3 * Albedo);
+
+	if(useSSAO == 1)
+	{
+	    ambient*= AmbientOcclusion * 10;
+	}
+
     // then calculate lighting as usual
-    vec3 lighting = Albedo * 0.1; // hard-coded ambient component
+    vec3 lighting = (ambient + Albedo) * 0.1; // hard-coded ambient component
     vec3 viewDir = normalize(viewPos - FragPos);
     for(int i = 0; i < NR_LIGHTS; ++i)
     {

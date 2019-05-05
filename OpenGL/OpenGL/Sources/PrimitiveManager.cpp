@@ -97,6 +97,7 @@ void PrimitiveManager::DrawQuad(Shader & shader, Camera & camera, glm::vec3 posi
 		shader.SetMat4("PVM", PVM);
 		shader.SetMat4("uModel", modelMatrix);
 		shader.SetVec3("viewPos", camera.GetPosition());
+		shader.SetMat4("projection", projection);
 
 		// shadow
 		{
