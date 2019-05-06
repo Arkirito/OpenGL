@@ -106,9 +106,8 @@ void Renderer::Render3D()
 
 
 	//TODO: Add all features. The following code is just for test.
-	mShader_3D_ColoredShader->Use();
-	mShader_3D_ColoredShader->SetVec4("mColor", glm::vec4(1.0, 0.0, 0.0, 1.0));
-	PrimitiveManager::DrawCube(mShader_3D_ColoredShader, camera, glm::vec3(0, 0, 0), glm::vec3(0, 0, 0), glm::vec3(0.7, 0.7, 0.7));
+	//PrimitiveManager::DrawCube(mShader_3D_ColoredShader, camera, glm::vec3(0, 0, 0), glm::vec3(0, 0, 0), glm::vec3(0.7, 0.7, 0.7));
+	PrimitiveManager::DrawSphere(mShader_3D_ColoredShader, camera, glm::vec3(0, 0, 0), glm::vec3(1, 1, 1));
 }
 
 void Renderer::RenderShadowDepth()

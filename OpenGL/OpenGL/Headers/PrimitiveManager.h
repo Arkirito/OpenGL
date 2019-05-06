@@ -16,6 +16,8 @@ public:
 		unsigned int shadow);
 	static void DrawSkybox(class Shader & shader,class Camera & camera,class Cubemap& cubemap);
 
+	static void DrawSphere(class Shader* shader, class Camera* camera, glm::vec3 position, glm::vec3 scale);
+
 protected:
 
 	static void Setup();
@@ -23,6 +25,7 @@ protected:
 	static void SetupCube();
 	static void SetupQuad();
 	static void SetupSkybox();
+	static void SetupSphere();
 
 	static unsigned int cubeVAO;
 	static unsigned int cubeVBO;
@@ -30,5 +33,7 @@ protected:
 	static unsigned int quadVBO;
 	static unsigned int skyboxVAO;
 	static unsigned int skyboxVBO;
+	static unsigned int sphereVAO;
+	static unsigned int indexCount;
 };
 
