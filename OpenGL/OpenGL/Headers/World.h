@@ -14,8 +14,20 @@ public:
 
 	void HandleInput(struct GLFWwindow *window);
 
+	class Camera* GetCurrentCamera();
+
+	void Draw(class Shader* shaderToDraw);
+
+	class DirectionalLight* GetDirectionalLight();
+
 protected:
 
 	std::vector<WorldObject*> mObjects;
+
+	class Camera* mCurrentCamera;
+
+	// Default scene objects
+
+	class DirectionalLight* mDirectionalLight; // Only one per scene, casts shadows
 };
 

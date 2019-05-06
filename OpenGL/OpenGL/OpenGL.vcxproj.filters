@@ -16,6 +16,12 @@
     <Filter Include="Sources\GLAD">
       <UniqueIdentifier>{c8f4f524-1b17-4e66-8a01-760a637d913e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Headers\Lights">
+      <UniqueIdentifier>{da615ca9-4779-4113-9fb2-af1b705d63d6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\Lights">
+      <UniqueIdentifier>{84ed24bc-1def-4478-a0ab-249965d2d192}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GLAD\src\glad.c">
@@ -60,6 +66,18 @@
     <ClCompile Include="Sources\Settings.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
+    <ClCompile Include="Sources\Renderer.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Lights\Light.cpp">
+      <Filter>Sources\Lights</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Lights\PointLight.cpp">
+      <Filter>Sources\Lights</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Lights\DirectionalLight.cpp">
+      <Filter>Sources\Lights</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Headers\Camera.h">
@@ -100,6 +118,18 @@
     </ClInclude>
     <ClInclude Include="Headers\Settings.h">
       <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\Renderer.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\Lights\Light.h">
+      <Filter>Headers\Lights</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\Lights\PointLight.h">
+      <Filter>Headers\Lights</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\Lights\DirectionalLight.h">
+      <Filter>Headers\Lights</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

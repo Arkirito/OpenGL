@@ -1,6 +1,4 @@
 #pragma once
-#include <vector>
-
 #include "Texture.h"
 #include "Shader.h"
 
@@ -8,11 +6,10 @@ class Material
 {
 public:
 	Material();
-	virtual ~Material();
+	Material(glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular);
 
-protected:
-
-	Shader * mShader;
-	std::vector<Texture*> mTextures;
+	glm::vec3 mAmbient;
+	glm::vec3 mDiffuse;
+	glm::vec3 mSpecular;
 };
 

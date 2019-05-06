@@ -5,7 +5,7 @@
 
 WorldObject::WorldObject()
 {
-	GlobalInstance::GetInstance()->GetWorld()->RegisterObject(this);
+	//GlobalInstance::GetInstance()->GetWorld()->RegisterObject(this);
 }
 
 

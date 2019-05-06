@@ -16,13 +16,13 @@ unsigned int PrimitiveManager::quadVBO = 0;
 unsigned int PrimitiveManager::skyboxVAO = 0;
 unsigned int PrimitiveManager::skyboxVBO = 0;
 
-void PrimitiveManager::DrawCube(Shader & shader, Camera & camera, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale, Texture * diffuse, Texture * specular)
+void PrimitiveManager::DrawCube(Shader* shader, Camera* camera, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale, Texture * diffuse, Texture * specular)
 {
 	const Settings* settings = GlobalInstance::GetInstance()->GetSettings();
 
 	SetupCube();
 
-	shader.Use();
+	shader->Use();
 
 	// Pass data to shader
 	{
@@ -38,23 +38,24 @@ void PrimitiveManager::DrawCube(Shader & shader, Camera & camera, glm::vec3 posi
 
 		glm::mat4 projection;
 		projection = glm::perspective(glm::radians(45.0f), settings->ViewportWidth / settings->ViewportHeight, 0.1f, 100.0f);
-		glm::mat4 PVM = projection * camera.GetViewMatrix() * modelMatrix;
+		glm::mat4 PVM = projection * camera->GetViewMatrix() * modelMatrix;
 
-		shader.SetMat4("PVM", PVM);
-		shader.SetMat4("uModel", modelMatrix);
-		shader.SetMat4("viewPos", camera.GetViewMatrix());
+		shader->SetMat4("PVM", PVM);
+		shader->SetMat4("uModel", modelMatrix);
+		shader->SetMat4("viewPos", camera->GetViewMatrix());
 	}
 
+	if (diffuse && specular)
 	{
 		//
 		glActiveTexture(GL_TEXTURE0);
 		diffuse->Bind();
-		shader.SetInt("material.texture_diffuse1", 0);
+		shader->SetInt("material.texture_diffuse1", 0);
 
 		glActiveTexture(GL_TEXTURE1);
 		specular->Bind();
-		shader.SetInt("material.texture_specular1", 1);
-		shader.SetFloat("material.shininess", 16.0);
+		shader->SetInt("material.texture_specular1", 1);
+		shader->SetFloat("material.shininess", 16.0);
 		//
 		glActiveTexture(GL_TEXTURE0);
 	}

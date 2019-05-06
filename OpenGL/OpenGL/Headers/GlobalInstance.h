@@ -3,6 +3,7 @@
 
 class World;
 class Settings;
+class Renderer;
 
 class GlobalInstance
 {
@@ -16,10 +17,16 @@ public:
 
 	const Settings* GetSettings() const;
 
+	Renderer* GetRenderer();
+
+	void Tick(struct GLFWwindow *window, float dt);
+
+	void Init();
+
 protected:
 
 	World* mWorld;
-
+	Renderer* mRenderer;
 	Settings* mSettings;
 
 private:
