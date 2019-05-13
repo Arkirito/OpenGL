@@ -153,6 +153,12 @@ void Renderer::RenderPBR()
 		mShader_3D_PBR->SetVec3(("lightColors[" + std::to_string(i) + "]").c_str(), PBRLightColors[i]);
 	}
 
+	mShader_3D_PBR->SetInt("irradianceMap", 0);
+
+	// bind pre-computed IBL data
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, mHdrCubemap->GetID());
+
 	PrimitiveManager::DrawSphere(mShader_3D_PBR, camera, glm::vec3(0, 0, 0), glm::vec3(1, 1, 1));
 }
 
@@ -171,7 +177,7 @@ void Renderer::RenderHDRtoCubemap()
 
 	// convert HDR equirectangular environment map to cubemap equivalent
 
-	mHdrTexture = Texture::LoadTexture("Content/Textures/HDR/Greenhouse3_Ref.hdr");
+	mHdrTexture = Texture::LoadTexture("Content/Textures/HDR/Greenhouse3_Env.hdr");
 
 	mShader_3D_HDRtoCubemap->Use();
 	mShader_3D_HDRtoCubemap->SetInt("equirectangularMap", 0);
