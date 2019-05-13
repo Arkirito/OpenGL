@@ -197,9 +197,12 @@ void PrimitiveManager::DrawSphere(Shader * shader, Camera * camera, glm::vec3 po
 		projection = glm::perspective(glm::radians(45.0f), settings->ViewportWidth / settings->ViewportHeight, 0.1f, 100.0f);
 		glm::mat4 PVM = projection * camera->GetViewMatrix() * modelMatrix;
 
+		shader->SetMat4("view", camera->GetViewMatrix());
+		shader->SetMat4("projection", projection);
+
 		shader->SetMat4("PVM", PVM);
 		shader->SetMat4("uModel", modelMatrix);
-		shader->SetMat4("viewPos", camera->GetViewMatrix());
+		shader->SetVec3("viewPos", camera->GetPosition());
 	}
 
 	glBindVertexArray(sphereVAO);

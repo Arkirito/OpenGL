@@ -36,6 +36,7 @@ protected:
 
 	void Render3D();
 	void RenderShadowDepth();
+	void RenderPBR();
 
 	void RenderPostProcess();
 	void RenderSSAO();
@@ -54,6 +55,8 @@ protected:
 	class Shader* mShader_3D_RefractionShader;
 	class Shader* mShader_3D_SkyboxShader;
 	class Shader* mShader_3D_ColoredShader;
+
+	class Shader* mShader_3D_PBR;
 
 	// PostProcess
 	class Shader* mShader_PostProcess_Native;
@@ -104,11 +107,18 @@ protected:
 	void SetupBloom();
 	void SetupDeferredShading();
 
+	void SetupPBR();
+
 private:
 
 	// This positions and colors should be moved to a specific container of Lights
 
 	std::vector<glm::vec3> deferredLightPositions;
 	std::vector<glm::vec3> deferredLightColors;
+
+	// This positions and colors should be moved to a specific container of PBR Lights
+
+	std::vector<glm::vec3> PBRLightPositions;
+	std::vector<glm::vec3> PBRLightColors;
 };
 

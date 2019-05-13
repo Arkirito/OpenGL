@@ -30,6 +30,7 @@ Renderer::Renderer()
 {
 	SetupCommon3D();
 	SetupCommonPostProcess();
+	SetupPBR();
 
 	//3D
 	SetupShadow();
@@ -56,6 +57,8 @@ Renderer::~Renderer()
 	delete mShader_PostProcess_Negative;
 	delete mShader_PostProcess_Grayscale;
 	delete mShader_PostProcess_ExposureToneMapping;
+
+	delete mShader_3D_PBR;
 }
 
 void Renderer::Render(float dt)
@@ -107,7 +110,9 @@ void Renderer::Render3D()
 
 	//TODO: Add all features. The following code is just for test.
 	//PrimitiveManager::DrawCube(mShader_3D_ColoredShader, camera, glm::vec3(0, 0, 0), glm::vec3(0, 0, 0), glm::vec3(0.7, 0.7, 0.7));
-	PrimitiveManager::DrawSphere(mShader_3D_ColoredShader, camera, glm::vec3(0, 0, 0), glm::vec3(1, 1, 1));
+	//PrimitiveManager::DrawSphere(mShader_3D_ColoredShader, camera, glm::vec3(0, 0, 0), glm::vec3(1, 1, 1));
+
+	RenderPBR();
 }
 
 void Renderer::RenderShadowDepth()
@@ -122,6 +127,28 @@ void Renderer::RenderShadowDepth()
 	world->Draw(mShader_3D_ShadowDepth);
 	glCullFace(GL_BACK);
 	glBindFramebuffer(GL_FRAMEBUFFER, mMain3DFramebuffer);
+}
+
+void Renderer::RenderPBR()
+{
+	World* world = GlobalInstance::GetInstance()->GetWorld();
+	Camera* camera = world->GetCurrentCamera();
+	const Settings& settings = *GlobalInstance::GetInstance()->GetSettings();
+
+	mShader_3D_PBR->Use();
+
+	mShader_3D_PBR->SetVec3("albedo", glm::vec3(0.5, 0.1, 0.1));
+	mShader_3D_PBR->SetFloat("metallic", 0.0);
+	mShader_3D_PBR->SetFloat("roughness", 0.4);
+	mShader_3D_PBR->SetFloat("ao", 0.1);
+
+	for (int i = 0; i < 4; ++i)
+	{
+		mShader_3D_PBR->SetVec3(("lightPositions[" + std::to_string(i) + "]").c_str(), PBRLightPositions[i]);
+		mShader_3D_PBR->SetVec3(("lightColors[" + std::to_string(i) + "]").c_str(), PBRLightColors[i]);
+	}
+
+	PrimitiveManager::DrawSphere(mShader_3D_PBR, camera, glm::vec3(0, 0, 0), glm::vec3(1, 1, 1));
 }
 
 void Renderer::RenderPostProcess()
@@ -474,4 +501,15 @@ void Renderer::SetupDeferredShading()
 		deferredLightColors.push_back(glm::vec3(rand() % 10, rand() % 10, rand() % 10));
 	}
 
+}
+
+void Renderer::SetupPBR()
+{
+	mShader_3D_PBR = new Shader("Shaders/PBR.vs", "Shaders/PBR.fs");
+
+	for (int i = 0; i < 4; ++i)
+	{
+		PBRLightPositions.push_back(glm::vec3(rand() % 20 - 10, rand() % 2, rand() % 20 - 10));
+		PBRLightColors.push_back(glm::vec3(rand() % 10, rand() % 10, rand() % 10));
+	}
 }
