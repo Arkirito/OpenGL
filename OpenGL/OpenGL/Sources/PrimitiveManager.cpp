@@ -152,7 +152,7 @@ void PrimitiveManager::DrawQuad(Shader & shader, Camera & camera, glm::vec3 posi
 	glBindVertexArray(0);
 }
 
-void PrimitiveManager::DrawSkybox(Shader & shader,Camera & camera, Cubemap& cubemap)
+void PrimitiveManager::DrawSkybox(Shader* shader,Camera* camera, Cubemap* cubemap)
 {
 	SetupSkybox();
 
@@ -163,14 +163,14 @@ void PrimitiveManager::DrawSkybox(Shader & shader,Camera & camera, Cubemap& cube
 
 	// draw skybox as last
 	glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
-	shader.Use();
-	glm::mat4 view = glm::mat4(glm::mat3(camera.GetViewMatrix())); // remove translation from the view matrix
-	shader.SetMat4("view", view);
-	shader.SetMat4("projection", projection);
+	shader->Use();
+	glm::mat4 view = glm::mat4(glm::mat3(camera->GetViewMatrix())); // remove translation from the view matrix
+	shader->SetMat4("view", view);
+	shader->SetMat4("projection", projection);
 	// skybox cube
 	glBindVertexArray(skyboxVAO);
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap.GetID());
+	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap->GetID());
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 	glBindVertexArray(0);
 	glDepthFunc(GL_LESS); // set depth function back to default
@@ -207,6 +207,15 @@ void PrimitiveManager::DrawSphere(Shader * shader, Camera * camera, glm::vec3 po
 
 	glBindVertexArray(sphereVAO);
 	glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
+}
+
+void PrimitiveManager::JustDrawCube()
+{
+	SetupCube();
+	// render Cube
+	glBindVertexArray(cubeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glBindVertexArray(0);
 }
 
 void PrimitiveManager::Setup()

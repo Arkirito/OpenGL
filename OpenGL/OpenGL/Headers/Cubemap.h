@@ -7,6 +7,7 @@
 class Cubemap
 {
 public:
+	Cubemap();
 	Cubemap(std::vector < std::string > facesPathes);
 	unsigned int GetID() const;
 

@@ -31,6 +31,7 @@ Renderer::Renderer()
 	SetupCommon3D();
 	SetupCommonPostProcess();
 	SetupPBR();
+	SetupHDRtoCubemap();
 
 	//3D
 	SetupShadow();
@@ -59,6 +60,9 @@ Renderer::~Renderer()
 	delete mShader_PostProcess_ExposureToneMapping;
 
 	delete mShader_3D_PBR;
+	delete mShader_3D_HDRtoCubemap;
+
+	delete mHdrCubemap;
 }
 
 void Renderer::Render(float dt)
@@ -113,6 +117,7 @@ void Renderer::Render3D()
 	//PrimitiveManager::DrawSphere(mShader_3D_ColoredShader, camera, glm::vec3(0, 0, 0), glm::vec3(1, 1, 1));
 
 	RenderPBR();
+	PrimitiveManager::DrawSkybox(mShader_3D_SkyboxShader, camera, mHdrCubemap);
 }
 
 void Renderer::RenderShadowDepth()
@@ -149,6 +154,43 @@ void Renderer::RenderPBR()
 	}
 
 	PrimitiveManager::DrawSphere(mShader_3D_PBR, camera, glm::vec3(0, 0, 0), glm::vec3(1, 1, 1));
+}
+
+void Renderer::RenderHDRtoCubemap()
+{
+	glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+	glm::mat4 captureViews[] =
+	{
+		glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+		glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+		glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  1.0f,  0.0f), glm::vec3(0.0f,  0.0f,  1.0f)),
+		glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f,  0.0f), glm::vec3(0.0f,  0.0f, -1.0f)),
+		glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+		glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f,  0.0f))
+	};
+
+	// convert HDR equirectangular environment map to cubemap equivalent
+
+	mHdrTexture = Texture::LoadTexture("Content/Textures/HDR/Greenhouse3_Ref.hdr");
+
+	mShader_3D_HDRtoCubemap->Use();
+	mShader_3D_HDRtoCubemap->SetInt("equirectangularMap", 0);
+	mShader_3D_HDRtoCubemap->SetMat4("projection", captureProjection);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, mHdrTexture->GetID());
+
+	glViewport(0, 0, 512, 512); // don't forget to configure the viewport to the capture dimensions.
+	glBindFramebuffer(GL_FRAMEBUFFER, mCaptureFBO);
+	for (unsigned int i = 0; i < 6; ++i)
+	{
+		mShader_3D_HDRtoCubemap->SetMat4("view", captureViews[i]);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+			GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, mHdrCubemap->GetID(), 0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		PrimitiveManager::JustDrawCube();
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, mMain3DFramebuffer);
 }
 
 void Renderer::RenderPostProcess()
@@ -512,4 +554,21 @@ void Renderer::SetupPBR()
 		PBRLightPositions.push_back(glm::vec3(rand() % 20 - 10, rand() % 2, rand() % 20 - 10));
 		PBRLightColors.push_back(glm::vec3(rand() % 10, rand() % 10, rand() % 10));
 	}
+}
+
+void Renderer::SetupHDRtoCubemap()
+{
+	mShader_3D_HDRtoCubemap = new Shader("Shaders/HDR_To_Cubemap.vs", "Shaders/HDR_To_Cubemap.fs");
+
+	glGenFramebuffers(1, &mCaptureFBO);
+	glGenRenderbuffers(1, &mCaptureRBO);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, mCaptureFBO);
+	glBindRenderbuffer(GL_RENDERBUFFER, mCaptureRBO);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, mCaptureRBO);
+
+	mHdrCubemap = new Cubemap();
+
+	RenderHDRtoCubemap();
 }

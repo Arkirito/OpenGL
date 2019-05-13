@@ -14,9 +14,11 @@ public:
 		class Texture * normal,
 		class Texture * depth,
 		unsigned int shadow);
-	static void DrawSkybox(class Shader & shader,class Camera & camera,class Cubemap& cubemap);
+	static void DrawSkybox(class Shader* shader, class Camera* camera, class Cubemap* cubemap);
 
 	static void DrawSphere(class Shader* shader, class Camera* camera, glm::vec3 position, glm::vec3 scale);
+
+	static void JustDrawCube();
 
 protected:
 

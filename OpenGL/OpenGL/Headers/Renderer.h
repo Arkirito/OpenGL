@@ -37,6 +37,7 @@ protected:
 	void Render3D();
 	void RenderShadowDepth();
 	void RenderPBR();
+	void RenderHDRtoCubemap();
 
 	void RenderPostProcess();
 	void RenderSSAO();
@@ -50,6 +51,7 @@ protected:
 	//3D
 	class Shader* mShader_3D_Mesh;
 	class Shader* mShader_3D_ShadowDepth;
+	class Shader* mShader_3D_HDRtoCubemap;
 
 	class Shader* mShader_3D_ReflectionShader;
 	class Shader* mShader_3D_RefractionShader;
@@ -97,6 +99,8 @@ protected:
 
 	const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 
+	unsigned int mCaptureFBO, mCaptureRBO;
+
 	// Setups
 	void SetupCommon3D();
 	void SetupShadow();
@@ -108,6 +112,13 @@ protected:
 	void SetupDeferredShading();
 
 	void SetupPBR();
+
+	void SetupHDRtoCubemap();
+
+	//DATA
+
+    class Texture* mHdrTexture;
+	class Cubemap* mHdrCubemap;
 
 private:
 
