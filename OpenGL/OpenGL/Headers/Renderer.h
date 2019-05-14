@@ -37,7 +37,7 @@ protected:
 	void Render3D();
 	void RenderShadowDepth();
 	void RenderPBR();
-	void RenderHDRtoCubemap();
+	void RenderHDRtoCubemap(class Texture* hdrTexture, class Cubemap* cubemap);
 
 	void RenderPostProcess();
 	void RenderSSAO();
@@ -117,8 +117,16 @@ protected:
 
 	//DATA
 
-    class Texture* mHdrTexture;
-	class Cubemap* mHdrCubemap;
+    class Texture* mHdrTextureEnv;
+	class Cubemap* mHdrCubemapEnv;
+	class Texture* mHdrTextureRef;
+	class Cubemap* mHdrCubemapRef;
+
+	Texture* mWoodenFloor_Diffuse;
+	Texture* mWodenFloor_Height;
+	Texture* mWoodenFloor_Normal;
+	Texture* mWoodenFloor_Metallic;
+	Texture* mWoodenFloor_AO;
 
 private:
 

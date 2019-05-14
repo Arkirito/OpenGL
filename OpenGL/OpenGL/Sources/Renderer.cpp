@@ -62,7 +62,8 @@ Renderer::~Renderer()
 	delete mShader_3D_PBR;
 	delete mShader_3D_HDRtoCubemap;
 
-	delete mHdrCubemap;
+	delete mHdrCubemapEnv;
+	delete mHdrCubemapRef;
 }
 
 void Renderer::Render(float dt)
@@ -113,11 +114,11 @@ void Renderer::Render3D()
 
 
 	//TODO: Add all features. The following code is just for test.
-	//PrimitiveManager::DrawCube(mShader_3D_ColoredShader, camera, glm::vec3(0, 0, 0), glm::vec3(0, 0, 0), glm::vec3(0.7, 0.7, 0.7));
+    //PrimitiveManager::DrawCube(mShader_3D_ColoredShader, camera, glm::vec3(0, 0, 0), glm::vec3(0, 0, 0), glm::vec3(0.7, 0.7, 0.7));
 	//PrimitiveManager::DrawSphere(mShader_3D_ColoredShader, camera, glm::vec3(0, 0, 0), glm::vec3(1, 1, 1));
 
 	RenderPBR();
-	PrimitiveManager::DrawSkybox(mShader_3D_SkyboxShader, camera, mHdrCubemap);
+	PrimitiveManager::DrawSkybox(mShader_3D_SkyboxShader, camera, mHdrCubemapRef);
 }
 
 void Renderer::RenderShadowDepth()
@@ -157,12 +158,28 @@ void Renderer::RenderPBR()
 
 	// bind pre-computed IBL data
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, mHdrCubemap->GetID());
+	glBindTexture(GL_TEXTURE_CUBE_MAP, mHdrCubemapEnv->GetID());
+
+	mShader_3D_PBR->SetInt("albedoMap", 1);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, mWoodenFloor_Diffuse->GetID());
+	mShader_3D_PBR->SetInt("roughnessMap", 2);
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, mWodenFloor_Height->GetID());
+	mShader_3D_PBR->SetInt("normalMap", 3);
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, mWoodenFloor_Normal->GetID());
+	mShader_3D_PBR->SetInt("metallicMap", 4);
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, mWoodenFloor_Metallic->GetID());
+	mShader_3D_PBR->SetInt("aoMap", 5);
+	glActiveTexture(GL_TEXTURE5);
+	glBindTexture(GL_TEXTURE_2D, mWoodenFloor_AO->GetID());
 
 	PrimitiveManager::DrawSphere(mShader_3D_PBR, camera, glm::vec3(0, 0, 0), glm::vec3(1, 1, 1));
 }
 
-void Renderer::RenderHDRtoCubemap()
+void Renderer::RenderHDRtoCubemap(Texture* hdrTexture, Cubemap* cubemap)
 {
 	glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
 	glm::mat4 captureViews[] =
@@ -177,13 +194,11 @@ void Renderer::RenderHDRtoCubemap()
 
 	// convert HDR equirectangular environment map to cubemap equivalent
 
-	mHdrTexture = Texture::LoadTexture("Content/Textures/HDR/Greenhouse3_Env.hdr");
-
 	mShader_3D_HDRtoCubemap->Use();
 	mShader_3D_HDRtoCubemap->SetInt("equirectangularMap", 0);
 	mShader_3D_HDRtoCubemap->SetMat4("projection", captureProjection);
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, mHdrTexture->GetID());
+	glBindTexture(GL_TEXTURE_2D, hdrTexture->GetID());
 
 	glViewport(0, 0, 512, 512); // don't forget to configure the viewport to the capture dimensions.
 	glBindFramebuffer(GL_FRAMEBUFFER, mCaptureFBO);
@@ -191,7 +206,7 @@ void Renderer::RenderHDRtoCubemap()
 	{
 		mShader_3D_HDRtoCubemap->SetMat4("view", captureViews[i]);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-			GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, mHdrCubemap->GetID(), 0);
+			GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, cubemap->GetID(), 0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		PrimitiveManager::JustDrawCube();
@@ -574,7 +589,18 @@ void Renderer::SetupHDRtoCubemap()
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, mCaptureRBO);
 
-	mHdrCubemap = new Cubemap();
+	mHdrCubemapEnv = new Cubemap();
+	mHdrCubemapRef = new Cubemap();
 
-	RenderHDRtoCubemap();
+	mHdrTextureRef = Texture::LoadTexture("Content/Textures/HDR/Mt-Washington-Gold-Room_Ref.hdr");
+	mHdrTextureEnv = Texture::LoadTexture("Content/Textures/HDR/Mt-Washington-Gold-Room_Env.hdr");
+
+	mWoodenFloor_Diffuse = Texture::LoadTexture("Content/Textures/woodenFloorPBR/hardwood-brown-planks-albedo.png");
+	mWodenFloor_Height = Texture::LoadTexture("Content/Textures/woodenFloorPBR/hardwood-brown-planks-height.png");
+	mWoodenFloor_Normal = Texture::LoadTexture("Content/Textures/woodenFloorPBR/hardwood-brown-planks-normal-dx.png");
+	mWoodenFloor_Metallic = Texture::LoadTexture("Content/Textures/woodenFloorPBR/hardwood-brown-planks-metallic.png");
+	mWoodenFloor_AO = Texture::LoadTexture("Content/Textures/woodenFloorPBR/hardwood-brown-planks-ao.png");
+
+	RenderHDRtoCubemap(mHdrTextureRef, mHdrCubemapRef);
+	RenderHDRtoCubemap(mHdrTextureEnv, mHdrCubemapEnv);
 }

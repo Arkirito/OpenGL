@@ -92,7 +92,7 @@ int main()
 
 	GlobalInstance::GetInstance()->Init();
 
-	Camera camera(glm::vec3(0.0f, 8.0f, 25.0f), glm::vec3(0.0f, 8.0f, 0.0f));
+	Camera camera(glm::vec3(0.0f, 8.0f, 25.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 	DirectionalLight light(glm::vec3(-5, -5, -5), glm::vec3(5, 5, 5), 1.0, 100);
 
 	light.mMaterial.mAmbient = glm::vec3(0.1, 0.1, 0.1);
@@ -115,10 +115,7 @@ int main()
 	Texture* metalRoughness = Texture::LoadTexture("Content/Textures/metalPBR/rustediron2_roughness.png");
 
 	//wood
-	Texture* woodenFloor_Diffuse = Texture::LoadTexture("Content/Textures/woodenFloorPBR/hardwood-brown-planks-albedo.png");
-	Texture* woodenFloor_Height = Texture::LoadTexture("Content/Textures/woodenFloorPBR/hardwood-brown-planks-height.png");
-	Texture* woodenFloor_Normal = Texture::LoadTexture("Content/Textures/woodenFloorPBR/hardwood-brown-planks-normal-dx.png");
-	Texture* woodenFloor_Metallic = Texture::LoadTexture("Content/Textures/woodenFloorPBR/hardwood-brown-planks-metallic.png");
+
 
 	//parallax
 	Texture* brickWall_Diffuse = Texture::LoadTexture("Content/Textures/parallaxBricks/diffuse.jpg");
